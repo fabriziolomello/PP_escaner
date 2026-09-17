@@ -38,7 +38,7 @@ async function registrarComercio(req, res) {
        RETURNING id, nombre, email, rol, comercio_id`,
       [nombre_admin, email, passwordHash, comercio.id]
     );
-    const usuario = usuarioResult.rows[0];
+    const usuario = { ...usuarioResult.rows[0], comercio_nombre: comercio.nombre };
 
     await client.query('COMMIT');
 
@@ -65,7 +65,11 @@ async function login(req, res) {
 
   try {
     const result = await pool.query(
-      'SELECT id, nombre, email, password_hash, rol, comercio_id FROM usuarios WHERE email = $1',
+      `SELECT usuarios.id, usuarios.nombre, usuarios.email, usuarios.password_hash,
+              usuarios.rol, usuarios.comercio_id, comercios.nombre AS comercio_nombre
+       FROM usuarios
+       JOIN comercios ON comercios.id = usuarios.comercio_id
+       WHERE usuarios.email = $1`,
       [email]
     );
     const usuario = result.rows[0];
@@ -88,6 +92,7 @@ async function login(req, res) {
         email: usuario.email,
         rol: usuario.rol,
         comercio_id: usuario.comercio_id,
+        comercio_nombre: usuario.comercio_nombre,
       },
     });
   } catch (err) {

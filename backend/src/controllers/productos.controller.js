@@ -1,5 +1,6 @@
 const pool = require('../config/db');
 const { parse } = require('csv-parse/sync');
+const cloudinary = require('../config/cloudinary');
 
 async function crear(req, res) {
   const { codigo_barras, nombre, precio } = req.body;
@@ -155,4 +156,39 @@ async function cargarCsv(req, res) {
   res.json(resumen);
 }
 
-module.exports = { crear, listar, obtenerPorId, cargarCsv };
+async function subirFoto(req, res) {
+  const comercio_id = req.user.comercio_id;
+  const { id } = req.params;
+
+  if (!req.file) {
+    return res.status(400).json({ error: 'No se recibio ninguna imagen' });
+  }
+
+  try {
+    const existente = await pool.query(
+      'SELECT id FROM productos WHERE id = $1 AND comercio_id = $2',
+      [id, comercio_id]
+    );
+    if (existente.rows.length === 0) {
+      return res.status(404).json({ error: 'Producto no encontrado' });
+    }
+
+    const dataUri = `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`;
+    const subida = await cloudinary.uploader.upload(dataUri, {
+      folder: `escaner/comercio_${comercio_id}`,
+    });
+
+    const result = await pool.query(
+      `UPDATE productos SET foto_url = $1 WHERE id = $2
+       RETURNING id, codigo_barras, nombre, precio, foto_url, comercio_id`,
+      [subida.secure_url, id]
+    );
+
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al subir la foto del producto' });
+  }
+}
+
+module.exports = { crear, listar, obtenerPorId, cargarCsv, subirFoto };
