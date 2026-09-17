@@ -33,3 +33,14 @@ export function cargarCsv(archivo) {
     body: formData,
   })
 }
+
+// 'foto' tiene que coincidir con uploadFoto.single('foto') del backend
+// (ver productos.routes.js, solo admin).
+export function subirFoto(id, foto) {
+  const formData = new FormData()
+  formData.append('foto', foto)
+  return apiFetch(`/productos/${id}/foto`, {
+    method: 'POST',
+    body: formData,
+  })
+}

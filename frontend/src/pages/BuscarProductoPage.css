@@ -1,0 +1,75 @@
+.buscar-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 32px 20px 24px;
+  background-color: var(--color-bg);
+}
+
+.buscar-page__eyebrow {
+  margin: 0 0 20px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+}
+
+.buscar-card {
+  width: 100%;
+  max-width: 360px;
+  background-color: var(--color-surface);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+}
+
+.buscar-input {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  background-color: var(--color-surface-alt);
+  color: var(--color-text-secondary);
+  margin-bottom: 16px;
+}
+
+.buscar-input input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: none;
+  outline: none;
+  color: var(--color-text);
+  font-size: 14px;
+}
+
+.buscar-input input::placeholder {
+  color: var(--color-text-secondary);
+}
+
+.buscar-card__error {
+  margin: 0 0 12px;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  background-color: rgba(242, 106, 106, 0.12);
+  color: var(--color-danger);
+  font-size: 13px;
+}
+
+.buscar-card__contador {
+  margin: 0 0 8px;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.buscar-card__estado {
+  margin: 8px 0;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+.buscar-card__lista {
+  display: flex;
+  flex-direction: column;
+}

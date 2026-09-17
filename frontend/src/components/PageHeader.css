@@ -1,0 +1,19 @@
+.page-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.page-header__back {
+  color: var(--color-text);
+  text-decoration: none;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.page-header__title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+}

@@ -1,6 +1,10 @@
 import { useEffect, useState } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
+import PageHeader from '../components/PageHeader'
+import ProductoListItem from '../components/ProductoListItem'
+import { ScanIcon } from '../components/icons'
 import { listar } from '../api/productos'
+import './ResultadosPage.css'
 
 // Siempre se muestra esta lista, aunque haya un solo resultado (o cero).
 // codigo_barras NO tiene restricción de unicidad en la base (ver schema.sql:30-33):
@@ -8,8 +12,8 @@ import { listar } from '../api/productos'
 // asumimos "un match = el producto correcto" sin que la persona lo confirme.
 export default function ResultadosPage() {
   const [searchParams] = useSearchParams()
-  const nombre = searchParams.get('nombre')
   const codigoBarras = searchParams.get('codigo_barras')
+  const navigate = useNavigate()
 
   const [productos, setProductos] = useState([])
   const [cargando, setCargando] = useState(true)
@@ -18,32 +22,52 @@ export default function ResultadosPage() {
   useEffect(() => {
     setCargando(true)
     setError('')
-    listar({ nombre, codigoBarras })
+    listar({ codigoBarras })
       .then(setProductos)
       .catch((err) => setError(err.message))
       .finally(() => setCargando(false))
-  }, [nombre, codigoBarras])
+  }, [codigoBarras])
 
   return (
-    <div>
-      <h1>Resultados</h1>
+    <div className="resultados-page">
+      <p className="resultados-page__eyebrow">Resultado del escaneo</p>
 
-      {cargando && <p>Buscando...</p>}
-      {error && <p role="alert">{error}</p>}
+      <div className="resultados-card">
+        <PageHeader title="Resultado del escaneo" backTo="/" />
 
-      {!cargando && !error && productos.length === 0 && <p>No se encontraron productos.</p>}
+        <div className="resultados-card__codigo">
+          <ScanIcon />
+          {codigoBarras}
+        </div>
 
-      {!cargando && !error && productos.length > 0 && (
-        <ul>
+        {cargando && <p className="resultados-card__estado">Buscando...</p>}
+        {error && (
+          <p className="resultados-card__error" role="alert">
+            {error}
+          </p>
+        )}
+
+        {!cargando && !error && (
+          <p className="resultados-card__contador">
+            {productos.length === 0
+              ? 'No se encontraron productos con este código'
+              : `${productos.length} producto${productos.length === 1 ? '' : 's'} coincide${
+                  productos.length === 1 ? '' : 'n'
+                } con este código`}
+          </p>
+        )}
+
+        <div className="resultados-card__lista">
           {productos.map((producto) => (
-            <li key={producto.id}>
-              <Link to={`/productos/${producto.id}`}>
-                {producto.nombre} — ${producto.precio} (código: {producto.codigo_barras})
-              </Link>
-            </li>
+            <ProductoListItem key={producto.id} producto={producto} />
           ))}
-        </ul>
-      )}
+        </div>
+
+        <button className="resultados-card__reescanear" onClick={() => navigate('/escanear')}>
+          <ScanIcon />
+          Escanear de nuevo
+        </button>
+      </div>
     </div>
   )
 }

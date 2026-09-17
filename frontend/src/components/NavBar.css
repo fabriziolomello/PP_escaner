@@ -1,0 +1,130 @@
+.navbar-trigger {
+  position: fixed;
+  top: 16px;
+  left: 16px;
+  z-index: 20;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background-color: var(--color-surface);
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.navbar-backdrop {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  z-index: 30;
+}
+
+.navbar-drawer {
+  position: fixed;
+  top: 12px;
+  bottom: 12px;
+  left: 12px;
+  width: min(280px, calc(100vw - 48px));
+  z-index: 40;
+  background-color: var(--color-surface);
+  border-radius: var(--radius-lg);
+  padding: 20px 16px;
+  display: flex;
+  flex-direction: column;
+  transform: translateX(calc(-100% - 24px));
+  transition: transform 0.2s ease;
+}
+
+.navbar-drawer--open {
+  transform: translateX(0);
+}
+
+.navbar-profile {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 16px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.navbar-profile__avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: var(--color-accent-avatar);
+  color: var(--color-text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.navbar-profile__info {
+  min-width: 0;
+}
+
+.navbar-profile__nombre {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.navbar-profile__rol {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.navbar-links {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.navbar-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  color: var(--color-text);
+  text-decoration: none;
+  font-size: 14px;
+}
+
+.navbar-link--active {
+  background-color: var(--color-active);
+  font-weight: 600;
+}
+
+.navbar-section-label {
+  margin: 12px 0 4px;
+  padding: 0 12px;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.navbar-logout {
+  margin-top: auto;
+  padding-top: 16px;
+  border: none;
+  border-top: 1px solid var(--color-border);
+  background: none;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--color-danger);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+}

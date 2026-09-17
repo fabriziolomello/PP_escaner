@@ -9,6 +9,8 @@ import ProductoDetallePage from './pages/ProductoDetallePage'
 import ProductoNuevoPage from './pages/ProductoNuevoPage'
 import ImportarCsvPage from './pages/ImportarCsvPage'
 import EmpleadosPage from './pages/EmpleadosPage'
+import EmpleadoNuevoPage from './pages/EmpleadoNuevoPage'
+import CatalogoPage from './pages/CatalogoPage'
 import ProtectedRoute from './routes/ProtectedRoute'
 
 function App() {
@@ -51,6 +53,14 @@ function App() {
           }
         />
         <Route
+          path="/catalogo"
+          element={
+            <ProtectedRoute rolesPermitidos={['admin']}>
+              <CatalogoPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/productos/nuevo"
           element={
             <ProtectedRoute rolesPermitidos={['admin']}>
@@ -71,6 +81,14 @@ function App() {
           element={
             <ProtectedRoute rolesPermitidos={['admin']}>
               <EmpleadosPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/empleados/nuevo"
+          element={
+            <ProtectedRoute rolesPermitidos={['admin']}>
+              <EmpleadoNuevoPage />
             </ProtectedRoute>
           }
         />

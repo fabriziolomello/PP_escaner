@@ -1,0 +1,80 @@
+.dashboard-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 32px 20px;
+  background-color: var(--color-bg);
+}
+
+.dashboard-page__eyebrow {
+  margin: 0 0 20px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+}
+
+.dashboard-card {
+  width: 100%;
+  max-width: 360px;
+  background-color: var(--color-surface);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+}
+
+.dashboard-card__saludo {
+  margin: 0;
+  font-size: 14px;
+  color: var(--color-text-secondary);
+}
+
+.dashboard-card__comercio {
+  margin: 4px 0 20px;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.dashboard-action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 14px;
+  border-radius: var(--radius-md);
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.dashboard-action--primary {
+  background-color: var(--color-accent-bg);
+  color: var(--color-accent);
+  margin-bottom: 12px;
+}
+
+.dashboard-action--secondary {
+  background-color: var(--color-surface-alt);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+}
+
+.dashboard-card__section-label {
+  margin: 24px 0 12px;
+  padding-top: 16px;
+  border-top: 1px solid var(--color-border);
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.dashboard-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 4px;
+  color: var(--color-text);
+  text-decoration: none;
+  font-size: 14px;
+}

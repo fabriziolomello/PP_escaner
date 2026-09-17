@@ -1,0 +1,92 @@
+.escanear-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 32px 20px 24px;
+  background-color: var(--color-bg);
+}
+
+.escanear-page__eyebrow {
+  margin: 0 0 20px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+}
+
+.escanear-card {
+  width: 100%;
+  max-width: 360px;
+  background-color: var(--color-surface);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+}
+
+.escanear-camara {
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background-color: #000000;
+  margin-bottom: 16px;
+}
+
+.escanear-camara__video {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+}
+
+.escanear-camara__video video {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover;
+}
+
+.escanear-card__instruccion {
+  margin: 0 0 20px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+.escanear-card__divisor {
+  margin: 0 0 12px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.escanear-manual {
+  display: flex;
+  gap: 10px;
+}
+
+.escanear-manual__input {
+  flex: 1;
+  min-width: 0;
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  background-color: var(--color-surface-alt);
+  color: var(--color-text);
+  font-size: 14px;
+}
+
+.escanear-manual__input:focus {
+  outline: none;
+  border-color: var(--color-accent);
+}
+
+.escanear-manual__input::placeholder {
+  color: var(--color-text-secondary);
+}
+
+.escanear-manual__boton {
+  padding: 12px 20px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background-color: #ffffff;
+  color: var(--color-button-text-on-white);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}

@@ -1,0 +1,159 @@
+.producto-nuevo-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 32px 20px 24px;
+  background-color: var(--color-bg);
+}
+
+.producto-nuevo-page__eyebrow {
+  margin: 0 0 20px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+}
+
+.producto-nuevo-card {
+  width: 100%;
+  max-width: 360px;
+  background-color: var(--color-surface);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+}
+
+.producto-nuevo-card__error {
+  margin: 0 0 16px;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  background-color: rgba(242, 106, 106, 0.12);
+  color: var(--color-danger);
+  font-size: 13px;
+}
+
+.producto-nuevo-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.producto-nuevo-form__field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  text-align: left;
+}
+
+.producto-nuevo-form__label {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+.producto-nuevo-form__input {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  background-color: var(--color-surface-alt);
+  color: var(--color-text);
+  font-size: 14px;
+}
+
+.producto-nuevo-form__input:focus {
+  outline: none;
+  border-color: var(--color-accent);
+}
+
+.producto-nuevo-form__codigo-row {
+  display: flex;
+  gap: 10px;
+}
+
+.producto-nuevo-form__codigo-row .producto-nuevo-form__input {
+  flex: 1;
+  min-width: 0;
+}
+
+.producto-nuevo-form__scan-boton {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: var(--radius-sm);
+  background-color: var(--color-accent-bg);
+  color: var(--color-accent);
+  cursor: pointer;
+}
+
+.producto-nuevo-camara {
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background-color: #000000;
+}
+
+.producto-nuevo-camara__video {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+}
+
+.producto-nuevo-camara__video video {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover;
+}
+
+.producto-nuevo-form__nota {
+  margin: -4px 0 0;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.producto-nuevo-form__foto-picker {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px dashed var(--color-border);
+  background-color: var(--color-surface-alt);
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.producto-nuevo-form__foto-preview {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.producto-nuevo-form__foto-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  opacity: 0;
+}
+
+.producto-nuevo-form__submit {
+  margin-top: 8px;
+  width: 100%;
+  padding: 13px 14px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background-color: #ffffff;
+  color: var(--color-button-text-on-white);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.producto-nuevo-form__submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
