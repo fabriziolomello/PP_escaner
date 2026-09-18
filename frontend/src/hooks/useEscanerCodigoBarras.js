@@ -38,7 +38,11 @@ export function useEscanerCodigoBarras(contenedorId, activo, onDetectado) {
       (codigoDecodificado) => {
         if (yaDetectado) return
         yaDetectado = true
-        scanner.stop().then(() => onDetectadoRef.current(codigoDecodificado))
+        // Algunos decoders devuelven espacios o caracteres de control junto
+        // al código (invisibles en pantalla) que rompen la comparación
+        // exacta contra la base. Se normaliza acá para cubrir a los dos
+        // consumidores del hook (EscanearPage y ProductoNuevoPage).
+        scanner.stop().then(() => onDetectadoRef.current(codigoDecodificado.trim()))
       },
       () => {
         // Se llama en cada frame donde NO se detecta un código válido.

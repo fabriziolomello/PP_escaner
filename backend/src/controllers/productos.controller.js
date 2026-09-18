@@ -3,7 +3,8 @@ const { parse } = require('csv-parse/sync');
 const cloudinary = require('../config/cloudinary');
 
 async function crear(req, res) {
-  const { codigo_barras, nombre, precio } = req.body;
+  const codigo_barras = req.body.codigo_barras?.trim();
+  const { nombre, precio } = req.body;
   const comercio_id = req.user.comercio_id;
 
   if (!codigo_barras || !nombre || precio === undefined || precio === null || precio === '') {
@@ -39,7 +40,8 @@ async function crear(req, res) {
 // Sin parametros, devuelve el catalogo completo del comercio.
 async function listar(req, res) {
   const comercio_id = req.user.comercio_id;
-  const { nombre, codigo_barras } = req.query;
+  const { nombre } = req.query;
+  const codigo_barras = req.query.codigo_barras?.trim();
 
   try {
     let rows;
