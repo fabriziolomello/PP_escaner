@@ -13,15 +13,19 @@ async function crear(req, res) {
 
   try {
     const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
-    const result = await pool.query(
+    const [result] = await pool.query(
       `INSERT INTO usuarios (nombre, email, password_hash, rol, comercio_id)
-       VALUES ($1, $2, $3, 'empleado', $4)
-       RETURNING id, nombre, email, rol, comercio_id, creado_en`,
+       VALUES (?, ?, ?, 'empleado', ?)`,
       [nombre, email, passwordHash, comercio_id]
     );
-    res.status(201).json(result.rows[0]);
+    const [rows] = await pool.query(
+      `SELECT id, nombre, email, rol, comercio_id, creado_en
+       FROM usuarios WHERE id = ?`,
+      [result.insertId]
+    );
+    res.status(201).json(rows[0]);
   } catch (err) {
-    if (err.code === '23505') {
+    if (err.code === 'ER_DUP_ENTRY') {
       return res.status(409).json({ error: 'Ya existe un usuario con ese email' });
     }
     console.error(err);
@@ -33,13 +37,13 @@ async function listar(req, res) {
   const comercio_id = req.user.comercio_id;
 
   try {
-    const result = await pool.query(
+    const [rows] = await pool.query(
       `SELECT id, nombre, email, rol, comercio_id, creado_en
-       FROM usuarios WHERE comercio_id = $1 AND rol = 'empleado'
+       FROM usuarios WHERE comercio_id = ? AND rol = 'empleado'
        ORDER BY nombre`,
       [comercio_id]
     );
-    res.json(result.rows);
+    res.json(rows);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error al listar empleados' });

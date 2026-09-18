@@ -20,39 +20,45 @@ async function registrarComercio(req, res) {
     return res.status(400).json({ error: 'Faltan datos obligatorios' });
   }
 
-  const client = await pool.connect();
+  const connection = await pool.getConnection();
   try {
-    await client.query('BEGIN');
+    await connection.beginTransaction();
 
-    const comercioResult = await client.query(
-      'INSERT INTO comercios (nombre) VALUES ($1) RETURNING id, nombre',
+    const [comercioResult] = await connection.query(
+      'INSERT INTO comercios (nombre) VALUES (?)',
       [nombre_comercio]
     );
-    const comercio = comercioResult.rows[0];
+    const comercio = { id: comercioResult.insertId, nombre: nombre_comercio };
 
     const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
 
-    const usuarioResult = await client.query(
+    const [usuarioResult] = await connection.query(
       `INSERT INTO usuarios (nombre, email, password_hash, rol, comercio_id)
-       VALUES ($1, $2, $3, 'admin', $4)
-       RETURNING id, nombre, email, rol, comercio_id`,
+       VALUES (?, ?, ?, 'admin', ?)`,
       [nombre_admin, email, passwordHash, comercio.id]
     );
-    const usuario = { ...usuarioResult.rows[0], comercio_nombre: comercio.nombre };
+    const usuario = {
+      id: usuarioResult.insertId,
+      nombre: nombre_admin,
+      email,
+      rol: 'admin',
+      comercio_id: comercio.id,
+      comercio_nombre: comercio.nombre,
+    };
 
-    await client.query('COMMIT');
+    await connection.commit();
 
     const token = generarToken(usuario);
     res.status(201).json({ token, usuario, comercio });
   } catch (err) {
-    await client.query('ROLLBACK');
-    if (err.code === '23505') {
+    await connection.rollback();
+    if (err.code === 'ER_DUP_ENTRY') {
       return res.status(409).json({ error: 'Ya existe un usuario con ese email' });
     }
     console.error(err);
     res.status(500).json({ error: 'Error al registrar el comercio' });
   } finally {
-    client.release();
+    connection.release();
   }
 }
 
@@ -64,15 +70,15 @@ async function login(req, res) {
   }
 
   try {
-    const result = await pool.query(
+    const [rows] = await pool.query(
       `SELECT usuarios.id, usuarios.nombre, usuarios.email, usuarios.password_hash,
               usuarios.rol, usuarios.comercio_id, comercios.nombre AS comercio_nombre
        FROM usuarios
        JOIN comercios ON comercios.id = usuarios.comercio_id
-       WHERE usuarios.email = $1`,
+       WHERE usuarios.email = ?`,
       [email]
     );
-    const usuario = result.rows[0];
+    const usuario = rows[0];
 
     if (!usuario) {
       return res.status(401).json({ error: 'Credenciales invalidas' });

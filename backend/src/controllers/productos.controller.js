@@ -16,13 +16,19 @@ async function crear(req, res) {
   }
 
   try {
-    const result = await pool.query(
+    const [result] = await pool.query(
       `INSERT INTO productos (codigo_barras, nombre, precio, comercio_id)
-       VALUES ($1, $2, $3, $4)
-       RETURNING id, codigo_barras, nombre, precio, foto_url, comercio_id`,
+       VALUES (?, ?, ?, ?)`,
       [codigo_barras, nombre, precioNumerico, comercio_id]
     );
-    res.status(201).json(result.rows[0]);
+    res.status(201).json({
+      id: result.insertId,
+      codigo_barras,
+      nombre,
+      precio: precioNumerico,
+      foto_url: null,
+      comercio_id,
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error al crear el producto' });
@@ -36,30 +42,30 @@ async function listar(req, res) {
   const { nombre, codigo_barras } = req.query;
 
   try {
-    let result;
+    let rows;
     if (codigo_barras) {
-      result = await pool.query(
+      [rows] = await pool.query(
         `SELECT id, codigo_barras, nombre, precio, foto_url, comercio_id
-         FROM productos WHERE comercio_id = $1 AND codigo_barras = $2
+         FROM productos WHERE comercio_id = ? AND codigo_barras = ?
          ORDER BY nombre`,
         [comercio_id, codigo_barras]
       );
     } else if (nombre) {
-      result = await pool.query(
+      [rows] = await pool.query(
         `SELECT id, codigo_barras, nombre, precio, foto_url, comercio_id
-         FROM productos WHERE comercio_id = $1 AND nombre ILIKE $2
+         FROM productos WHERE comercio_id = ? AND nombre LIKE ?
          ORDER BY nombre`,
         [comercio_id, `%${nombre}%`]
       );
     } else {
-      result = await pool.query(
+      [rows] = await pool.query(
         `SELECT id, codigo_barras, nombre, precio, foto_url, comercio_id
-         FROM productos WHERE comercio_id = $1
+         FROM productos WHERE comercio_id = ?
          ORDER BY nombre`,
         [comercio_id]
       );
     }
-    res.json(result.rows);
+    res.json(rows);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error al buscar productos' });
@@ -71,15 +77,15 @@ async function obtenerPorId(req, res) {
   const { id } = req.params;
 
   try {
-    const result = await pool.query(
+    const [rows] = await pool.query(
       `SELECT id, codigo_barras, nombre, precio, foto_url, comercio_id
-       FROM productos WHERE id = $1 AND comercio_id = $2`,
+       FROM productos WHERE id = ? AND comercio_id = ?`,
       [id, comercio_id]
     );
-    if (result.rows.length === 0) {
+    if (rows.length === 0) {
       return res.status(404).json({ error: 'Producto no encontrado' });
     }
-    res.json(result.rows[0]);
+    res.json(rows[0]);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error al obtener el producto' });
@@ -126,23 +132,23 @@ async function cargarCsv(req, res) {
     }
 
     try {
-      const existente = await pool.query(
-        `SELECT id FROM productos WHERE comercio_id = $1 AND codigo_barras = $2
+      const [existente] = await pool.query(
+        `SELECT id FROM productos WHERE comercio_id = ? AND codigo_barras = ?
          ORDER BY id LIMIT 1`,
         [comercio_id, codigo_barras]
       );
 
-      if (existente.rows.length > 0) {
-        await pool.query('UPDATE productos SET nombre = $1, precio = $2 WHERE id = $3', [
+      if (existente.length > 0) {
+        await pool.query('UPDATE productos SET nombre = ?, precio = ? WHERE id = ?', [
           nombre,
           precio,
-          existente.rows[0].id,
+          existente[0].id,
         ]);
         resumen.actualizados++;
       } else {
         await pool.query(
           `INSERT INTO productos (codigo_barras, nombre, precio, comercio_id)
-           VALUES ($1, $2, $3, $4)`,
+           VALUES (?, ?, ?, ?)`,
           [codigo_barras, nombre, precio, comercio_id]
         );
         resumen.creados++;
@@ -165,11 +171,11 @@ async function subirFoto(req, res) {
   }
 
   try {
-    const existente = await pool.query(
-      'SELECT id FROM productos WHERE id = $1 AND comercio_id = $2',
+    const [existente] = await pool.query(
+      'SELECT id FROM productos WHERE id = ? AND comercio_id = ?',
       [id, comercio_id]
     );
-    if (existente.rows.length === 0) {
+    if (existente.length === 0) {
       return res.status(404).json({ error: 'Producto no encontrado' });
     }
 
@@ -178,13 +184,15 @@ async function subirFoto(req, res) {
       folder: `escaner/comercio_${comercio_id}`,
     });
 
-    const result = await pool.query(
-      `UPDATE productos SET foto_url = $1 WHERE id = $2
-       RETURNING id, codigo_barras, nombre, precio, foto_url, comercio_id`,
-      [subida.secure_url, id]
+    await pool.query('UPDATE productos SET foto_url = ? WHERE id = ?', [subida.secure_url, id]);
+
+    const [rows] = await pool.query(
+      `SELECT id, codigo_barras, nombre, precio, foto_url, comercio_id
+       FROM productos WHERE id = ?`,
+      [id]
     );
 
-    res.json(result.rows[0]);
+    res.json(rows[0]);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error al subir la foto del producto' });
