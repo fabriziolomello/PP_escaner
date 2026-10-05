@@ -7,6 +7,7 @@ const productosRoutes = require('./routes/productos.routes');
 const empleadosRoutes = require('./routes/empleados.routes');
 const ventasRoutes = require('./routes/ventas.routes');
 const stockRoutes = require('./routes/stock.routes');
+const cajaRoutes = require('./routes/caja.routes');
 
 const app = express();
 
@@ -18,6 +19,7 @@ app.use('/api/productos', productosRoutes);
 app.use('/api/empleados', empleadosRoutes);
 app.use('/api/ventas', ventasRoutes);
 app.use('/api/stock', stockRoutes);
+app.use('/api/caja', cajaRoutes);
 
 // Build del frontend (ver "npm run build:frontend"), servido desde el mismo
 // backend para no depender de un dominio separado.

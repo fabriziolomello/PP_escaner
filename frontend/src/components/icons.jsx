@@ -209,3 +209,13 @@ export function CloseIcon(props) {
     </svg>
   )
 }
+
+export function CashIcon(props) {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
+      <rect x="3" y="6" width="18" height="12" rx="2" stroke="currentColor" strokeWidth="2" />
+      <circle cx="12" cy="12" r="2.5" stroke="currentColor" strokeWidth="2" />
+      <path d="M6.5 9.5v.01M17.5 14.5v.01" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+    </svg>
+  )
+}

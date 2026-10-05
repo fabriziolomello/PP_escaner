@@ -1,4 +1,4 @@
-// Helpers de presentación compartidos por el carrito, Ventas e Ingreso/Egreso.
+// Helpers de presentación compartidos por el carrito, Ventas, Ingreso/Egreso y Caja.
 
 export const METODOS_PAGO = [
   { valor: 'efectivo', etiqueta: 'Efectivo' },
@@ -13,7 +13,8 @@ export function etiquetaMetodoPago(valor) {
 // Los DECIMAL llegan del backend como string ("1500.00"); los totales
 // calculados en el cliente son number. Ambos se muestran igual.
 export function formatearPrecio(valor) {
-  return `$${Number(valor).toFixed(2)}`
+  const numero = Number(valor)
+  return `${numero < 0 ? '-' : ''}$${Math.abs(numero).toFixed(2)}`
 }
 
 export function formatearFechaHora(fecha) {

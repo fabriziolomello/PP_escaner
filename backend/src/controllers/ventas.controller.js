@@ -30,6 +30,7 @@ function normalizarItems(items) {
 // el mostrador igual hay que poder vender. El stock puede quedar negativo,
 // y eso mismo avisa que hay que corregirlo desde Ingreso/Egreso.
 // Venta, items y descuento de stock van en una sola transaccion.
+// Sin caja abierta no se vende: cada venta queda asociada a la caja del turno.
 async function crear(req, res) {
   const { metodo_pago } = req.body;
   const { comercio_id, user_id } = req.user;
@@ -46,6 +47,18 @@ async function crear(req, res) {
   const connection = await pool.getConnection();
   try {
     await connection.beginTransaction();
+
+    // LOCK IN SHARE MODE: varias ventas pueden ir en paralelo, pero si se
+    // esta cerrando la caja (FOR UPDATE en caja.controller.js) se espera.
+    const [cajas] = await connection.query(
+      "SELECT id FROM cajas WHERE comercio_id = ? AND estado = 'abierta' LOCK IN SHARE MODE",
+      [comercio_id]
+    );
+    if (cajas.length === 0) {
+      await connection.rollback();
+      return res.status(409).json({ error: 'Primero abrí la caja', codigo: 'CAJA_CERRADA' });
+    }
+    const cajaId = cajas[0].id;
 
     // FOR UPDATE + ORDER BY id: bloquear siempre en el mismo orden evita
     // deadlocks entre ventas concurrentes que comparten productos.
@@ -77,9 +90,9 @@ async function crear(req, res) {
     const total = totalCentavos / 100;
 
     const [ventaResult] = await connection.query(
-      `INSERT INTO ventas (comercio_id, usuario_id, total, metodo_pago)
-       VALUES (?, ?, ?, ?)`,
-      [comercio_id, user_id, total, metodo_pago]
+      `INSERT INTO ventas (comercio_id, usuario_id, caja_id, total, metodo_pago)
+       VALUES (?, ?, ?, ?, ?)`,
+      [comercio_id, user_id, cajaId, total, metodo_pago]
     );
     const ventaId = ventaResult.insertId;
 
@@ -122,9 +135,10 @@ async function listar(req, res) {
   try {
     const [ventas] = await pool.query(
       `SELECT ventas.id, ventas.total, ventas.metodo_pago, ventas.anulada, ventas.creado_en,
-              usuarios.nombre AS usuario_nombre
+              usuarios.nombre AS usuario_nombre, cajas.estado AS caja_estado
        FROM ventas
        JOIN usuarios ON usuarios.id = ventas.usuario_id
+       LEFT JOIN cajas ON cajas.id = ventas.caja_id
        WHERE ventas.comercio_id = ?
        ORDER BY ventas.creado_en DESC, ventas.id DESC
        LIMIT ?`,
@@ -165,7 +179,9 @@ async function listar(req, res) {
 }
 
 // Anulacion "blanda": la venta queda en el historial marcada como anulada
-// y se devuelve al stock lo que habia descontado.
+// y se devuelve al stock lo que habia descontado. Si su caja ya se cerro no
+// se puede anular, porque cambiaria los totales de un cierre ya hecho
+// (las ventas de antes de la Fase 2 no tienen caja y si se pueden anular).
 async function anular(req, res) {
   const comercio_id = req.user.comercio_id;
   const { id } = req.params;
@@ -175,7 +191,11 @@ async function anular(req, res) {
     await connection.beginTransaction();
 
     const [ventas] = await connection.query(
-      'SELECT id, anulada FROM ventas WHERE id = ? AND comercio_id = ? FOR UPDATE',
+      `SELECT ventas.id, ventas.anulada, cajas.estado AS caja_estado
+       FROM ventas
+       LEFT JOIN cajas ON cajas.id = ventas.caja_id
+       WHERE ventas.id = ? AND ventas.comercio_id = ?
+       FOR UPDATE`,
       [id, comercio_id]
     );
     if (ventas.length === 0) {
@@ -185,6 +205,10 @@ async function anular(req, res) {
     if (ventas[0].anulada) {
       await connection.rollback();
       return res.status(409).json({ error: 'La venta ya estaba anulada' });
+    }
+    if (ventas[0].caja_estado === 'cerrada') {
+      await connection.rollback();
+      return res.status(409).json({ error: 'No se puede anular una venta de una caja ya cerrada' });
     }
 
     const [items] = await connection.query(

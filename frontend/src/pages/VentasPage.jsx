@@ -124,7 +124,7 @@ export default function VentasPage() {
                     ))}
                     <p className="venta-item__vendedor">Vendió: {venta.usuario_nombre}</p>
 
-                    {esAdmin && !venta.anulada && (
+                    {esAdmin && !venta.anulada && venta.caja_estado !== 'cerrada' && (
                       <button
                         className="venta-item__anular"
                         onClick={() => handleAnular(venta)}

@@ -13,6 +13,7 @@ import EmpleadoNuevoPage from './pages/EmpleadoNuevoPage'
 import CatalogoPage from './pages/CatalogoPage'
 import VentasPage from './pages/VentasPage'
 import MovimientoStockPage from './pages/MovimientoStockPage'
+import CajaPage from './pages/CajaPage'
 import ProtectedRoute from './routes/ProtectedRoute'
 
 function App() {
@@ -67,6 +68,14 @@ function App() {
           element={
             <ProtectedRoute>
               <MovimientoStockPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/caja"
+          element={
+            <ProtectedRoute>
+              <CajaPage />
             </ProtectedRoute>
           }
         />

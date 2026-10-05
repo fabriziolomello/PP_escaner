@@ -4,13 +4,12 @@ import { useAuth } from '../context/AuthContext'
 import {
   MenuIcon,
   HomeIcon,
-  ScanIcon,
-  SearchIcon,
   BoxIcon,
   PeopleIcon,
   LogoutIcon,
   ReceiptIcon,
   SwapIcon,
+  CashIcon,
 } from './icons'
 import './NavBar.css'
 
@@ -72,22 +71,6 @@ export default function NavBar() {
             Inicio
           </Link>
           <Link
-            className={`navbar-link${esActiva('/escanear') ? ' navbar-link--active' : ''}`}
-            to="/escanear"
-            onClick={cerrar}
-          >
-            <ScanIcon />
-            Escanear
-          </Link>
-          <Link
-            className={`navbar-link${location.pathname === '/productos' ? ' navbar-link--active' : ''}`}
-            to="/productos"
-            onClick={cerrar}
-          >
-            <SearchIcon />
-            Buscar producto
-          </Link>
-          <Link
             className={`navbar-link${esActiva('/ventas') ? ' navbar-link--active' : ''}`}
             to="/ventas"
             onClick={cerrar}
@@ -102,6 +85,14 @@ export default function NavBar() {
           >
             <SwapIcon />
             Ingreso/Egreso
+          </Link>
+          <Link
+            className={`navbar-link${esActiva('/caja') ? ' navbar-link--active' : ''}`}
+            to="/caja"
+            onClick={cerrar}
+          >
+            <CashIcon />
+            Caja
           </Link>
 
           {esAdmin && (

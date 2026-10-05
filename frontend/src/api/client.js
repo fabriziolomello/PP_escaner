@@ -25,7 +25,11 @@ export default async function apiFetch(path, options = {}) {
   const data = await response.json().catch(() => null)
 
   if (!response.ok) {
-    throw new Error(data?.error || `Error ${response.status}`)
+    const error = new Error(data?.error || `Error ${response.status}`)
+    // Algunos errores traen un código para reaccionar distinto en la UI
+    // (ej. 'CAJA_CERRADA' al vender sin caja abierta).
+    error.codigo = data?.codigo
+    throw error
   }
 
   return data

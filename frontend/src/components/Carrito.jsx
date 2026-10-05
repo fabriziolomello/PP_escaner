@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useCarrito } from '../context/CarritoContext'
 import { crear } from '../api/ventas'
+import { abrir as abrirCaja } from '../api/caja'
 import { METODOS_PAGO, formatearPrecio } from '../utils/formato'
 import { CartIcon, CloseIcon, MinusIcon, PlusIcon, ImagePlaceholderIcon } from './icons'
 import './Carrito.css'
@@ -16,9 +17,13 @@ export default function Carrito() {
   const [vendiendo, setVendiendo] = useState(false)
   const [error, setError] = useState('')
   const [ventaRegistrada, setVentaRegistrada] = useState(null)
+  // Se activa cuando el backend rechaza la venta porque no hay caja abierta.
+  const [pideCaja, setPideCaja] = useState(false)
+  const [montoInicial, setMontoInicial] = useState('')
 
   function abrir() {
     setError('')
+    setPideCaja(false)
     setVentaRegistrada(null)
     setAbierto(true)
   }
@@ -39,10 +44,30 @@ export default function Carrito() {
       setMetodoPago('')
       setVentaRegistrada(venta)
     } catch (err) {
-      setError(err.message)
+      if (err.codigo === 'CAJA_CERRADA') {
+        setPideCaja(true)
+      } else {
+        setError(err.message)
+      }
     } finally {
       setVendiendo(false)
     }
+  }
+
+  // Abre la caja sin salir del carrito y sigue con la venta que quedó pendiente.
+  async function abrirCajaYVender() {
+    setError('')
+    setVendiendo(true)
+    try {
+      await abrirCaja(Number(montoInicial))
+      setPideCaja(false)
+      setMontoInicial('')
+    } catch (err) {
+      setError(err.message)
+      setVendiendo(false)
+      return
+    }
+    await vender()
   }
 
   return (
@@ -140,9 +165,32 @@ export default function Carrito() {
               </p>
             )}
 
-            <button className="carrito-vender" onClick={vender} disabled={!metodoPago || vendiendo}>
-              {vendiendo ? 'Registrando...' : `Vender ${formatearPrecio(total)}`}
-            </button>
+            {pideCaja ? (
+              <div className="carrito-caja">
+                <p className="carrito-caja__titulo">Primero abrí la caja</p>
+                <label className="carrito-caja__field">
+                  <span>Efectivo inicial en el cajón</span>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={montoInicial}
+                    onChange={(event) => setMontoInicial(event.target.value)}
+                  />
+                </label>
+                <button
+                  className="carrito-vender"
+                  onClick={abrirCajaYVender}
+                  disabled={montoInicial === '' || vendiendo}
+                >
+                  {vendiendo ? 'Abriendo...' : 'Abrir caja y vender'}
+                </button>
+              </div>
+            ) : (
+              <button className="carrito-vender" onClick={vender} disabled={!metodoPago || vendiendo}>
+                {vendiendo ? 'Registrando...' : `Vender ${formatearPrecio(total)}`}
+              </button>
+            )}
           </>
         )}
       </aside>
