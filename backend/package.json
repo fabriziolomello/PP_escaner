@@ -5,7 +5,7 @@
   "description": "API REST del proyecto Escaner (TFI Tecnicatura en Programacion - TECLAB)",
   "main": "src/server.js",
   "scripts": {
-    "dev": "nodemon src/server.js",
+    "dev": "node --watch src/server.js",
     "start": "node src/server.js",
     "build:frontend": "npm --prefix ../frontend run build && rm -rf public && cp -r ../frontend/dist public"
   },
@@ -19,8 +19,5 @@
     "jsonwebtoken": "^9.0.2",
     "multer": "^2.0.0",
     "mysql2": "^3.11.0"
-  },
-  "devDependencies": {
-    "nodemon": "^3.1.4"
   }
 }
