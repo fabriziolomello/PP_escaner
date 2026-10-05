@@ -5,6 +5,8 @@ const multer = require('multer');
 const authRoutes = require('./routes/auth.routes');
 const productosRoutes = require('./routes/productos.routes');
 const empleadosRoutes = require('./routes/empleados.routes');
+const ventasRoutes = require('./routes/ventas.routes');
+const stockRoutes = require('./routes/stock.routes');
 
 const app = express();
 
@@ -14,6 +16,8 @@ app.use(express.json());
 app.use('/api/auth', authRoutes);
 app.use('/api/productos', productosRoutes);
 app.use('/api/empleados', empleadosRoutes);
+app.use('/api/ventas', ventasRoutes);
+app.use('/api/stock', stockRoutes);
 
 // Build del frontend (ver "npm run build:frontend"), servido desde el mismo
 // backend para no depender de un dominio separado.

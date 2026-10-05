@@ -11,6 +11,8 @@ import ImportarCsvPage from './pages/ImportarCsvPage'
 import EmpleadosPage from './pages/EmpleadosPage'
 import EmpleadoNuevoPage from './pages/EmpleadoNuevoPage'
 import CatalogoPage from './pages/CatalogoPage'
+import VentasPage from './pages/VentasPage'
+import MovimientoStockPage from './pages/MovimientoStockPage'
 import ProtectedRoute from './routes/ProtectedRoute'
 
 function App() {
@@ -49,6 +51,22 @@ function App() {
           element={
             <ProtectedRoute>
               <ResultadosPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/ventas"
+          element={
+            <ProtectedRoute>
+              <VentasPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/stock"
+          element={
+            <ProtectedRoute>
+              <MovimientoStockPage />
             </ProtectedRoute>
           }
         />

@@ -71,7 +71,7 @@ export default function CatalogoPage() {
 
         <div className="catalogo-card__lista">
           {productos.map((producto) => (
-            <ProductoListItem key={producto.id} producto={producto} mostrarCodigo />
+            <ProductoListItem key={producto.id} producto={producto} mostrarCodigo mostrarStock />
           ))}
         </div>
       </div>

@@ -90,7 +90,7 @@
 }
 
 .detalle-card__precio {
-  margin: 0 0 16px;
+  margin: 0 0 8px;
   font-size: 20px;
   font-weight: 700;
   color: var(--color-accent);
@@ -104,4 +104,31 @@
   border-top: 1px solid var(--color-border);
   color: var(--color-text-secondary);
   font-size: 13px;
+}
+
+.detalle-card__stock {
+  margin: 0 0 16px;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+.detalle-card__stock--agotado {
+  color: var(--color-danger);
+}
+
+.detalle-card__agregar {
+  margin-top: 20px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 14px;
+  border: none;
+  border-radius: var(--radius-md);
+  background-color: var(--color-accent-bg);
+  color: var(--color-accent);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
 }

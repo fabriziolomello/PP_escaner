@@ -28,6 +28,7 @@ async function crear(req, res) {
       nombre,
       precio: precioNumerico,
       foto_url: null,
+      stock: 0,
       comercio_id,
     });
   } catch (err) {
@@ -47,21 +48,21 @@ async function listar(req, res) {
     let rows;
     if (codigo_barras) {
       [rows] = await pool.query(
-        `SELECT id, codigo_barras, nombre, precio, foto_url, comercio_id
+        `SELECT id, codigo_barras, nombre, precio, foto_url, stock, comercio_id
          FROM productos WHERE comercio_id = ? AND codigo_barras = ?
          ORDER BY nombre`,
         [comercio_id, codigo_barras]
       );
     } else if (nombre) {
       [rows] = await pool.query(
-        `SELECT id, codigo_barras, nombre, precio, foto_url, comercio_id
+        `SELECT id, codigo_barras, nombre, precio, foto_url, stock, comercio_id
          FROM productos WHERE comercio_id = ? AND nombre LIKE ?
          ORDER BY nombre`,
         [comercio_id, `%${nombre}%`]
       );
     } else {
       [rows] = await pool.query(
-        `SELECT id, codigo_barras, nombre, precio, foto_url, comercio_id
+        `SELECT id, codigo_barras, nombre, precio, foto_url, stock, comercio_id
          FROM productos WHERE comercio_id = ?
          ORDER BY nombre`,
         [comercio_id]
@@ -80,7 +81,7 @@ async function obtenerPorId(req, res) {
 
   try {
     const [rows] = await pool.query(
-      `SELECT id, codigo_barras, nombre, precio, foto_url, comercio_id
+      `SELECT id, codigo_barras, nombre, precio, foto_url, stock, comercio_id
        FROM productos WHERE id = ? AND comercio_id = ?`,
       [id, comercio_id]
     );
@@ -189,7 +190,7 @@ async function subirFoto(req, res) {
     await pool.query('UPDATE productos SET foto_url = ? WHERE id = ?', [subida.secure_url, id]);
 
     const [rows] = await pool.query(
-      `SELECT id, codigo_barras, nombre, precio, foto_url, comercio_id
+      `SELECT id, codigo_barras, nombre, precio, foto_url, stock, comercio_id
        FROM productos WHERE id = ?`,
       [id]
     );

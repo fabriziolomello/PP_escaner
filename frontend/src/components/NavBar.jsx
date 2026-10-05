@@ -1,7 +1,17 @@
 import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { MenuIcon, HomeIcon, ScanIcon, SearchIcon, BoxIcon, PeopleIcon, LogoutIcon } from './icons'
+import {
+  MenuIcon,
+  HomeIcon,
+  ScanIcon,
+  SearchIcon,
+  BoxIcon,
+  PeopleIcon,
+  LogoutIcon,
+  ReceiptIcon,
+  SwapIcon,
+} from './icons'
 import './NavBar.css'
 
 // Solo se renderiza dentro de ProtectedRoute (ver routes/ProtectedRoute.jsx),
@@ -76,6 +86,22 @@ export default function NavBar() {
           >
             <SearchIcon />
             Buscar producto
+          </Link>
+          <Link
+            className={`navbar-link${esActiva('/ventas') ? ' navbar-link--active' : ''}`}
+            to="/ventas"
+            onClick={cerrar}
+          >
+            <ReceiptIcon />
+            Ventas
+          </Link>
+          <Link
+            className={`navbar-link${esActiva('/stock') ? ' navbar-link--active' : ''}`}
+            to="/stock"
+            onClick={cerrar}
+          >
+            <SwapIcon />
+            Ingreso/Egreso
           </Link>
 
           {esAdmin && (

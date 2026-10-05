@@ -1,12 +1,13 @@
 import { Navigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import NavBar from '../components/NavBar'
+import Carrito from '../components/Carrito'
 
 // Envuelve una página privada. Sin sesión -> redirige a /login.
 // Con rolesPermitidos definido, además exige que el rol del usuario
 // esté en esa lista (ej. rolesPermitidos={['admin']} para rutas admin-only).
 // De paso, agrega el NavBar: así todas las páginas protegidas lo heredan
-// sin tener que importarlo una por una.
+// sin tener que importarlo una por una. Lo mismo con el carrito flotante.
 export default function ProtectedRoute({ children, rolesPermitidos }) {
   const { usuario } = useAuth()
 
@@ -22,6 +23,8 @@ export default function ProtectedRoute({ children, rolesPermitidos }) {
     <>
       <NavBar />
       {children}
+      <div className="carrito-espaciador" />
+      <Carrito />
     </>
   )
 }

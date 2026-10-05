@@ -52,6 +52,15 @@
   color: var(--color-text-secondary);
 }
 
+.producto-list-item__stock {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.producto-list-item__stock--agotado {
+  color: var(--color-danger);
+}
+
 .producto-list-item__chevron {
   color: var(--color-text-secondary);
   flex-shrink: 0;
