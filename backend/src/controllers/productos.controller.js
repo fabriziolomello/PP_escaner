@@ -95,6 +95,46 @@ async function obtenerPorId(req, res) {
   }
 }
 
+// Edita los datos basicos. El stock no se toca aca: se corrige con un
+// movimiento de Ingreso/Egreso para que quede registrado.
+async function actualizar(req, res) {
+  const comercio_id = req.user.comercio_id;
+  const { id } = req.params;
+  const codigo_barras = req.body.codigo_barras?.trim();
+  const nombre = req.body.nombre?.trim();
+  const { precio } = req.body;
+
+  if (!codigo_barras || !nombre || precio === undefined || precio === null || precio === '') {
+    return res.status(400).json({ error: 'Faltan datos obligatorios' });
+  }
+
+  const precioNumerico = Number(precio);
+  if (!Number.isFinite(precioNumerico) || precioNumerico < 0) {
+    return res.status(400).json({ error: 'El precio debe ser un numero valido' });
+  }
+
+  try {
+    const [result] = await pool.query(
+      `UPDATE productos SET codigo_barras = ?, nombre = ?, precio = ?
+       WHERE id = ? AND comercio_id = ?`,
+      [codigo_barras, nombre, precioNumerico, id, comercio_id]
+    );
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'Producto no encontrado' });
+    }
+
+    const [rows] = await pool.query(
+      `SELECT id, codigo_barras, nombre, precio, foto_url, stock, comercio_id
+       FROM productos WHERE id = ?`,
+      [id]
+    );
+    res.json(rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al actualizar el producto' });
+  }
+}
+
 // Upsert por codigo_barras. Como codigo_barras no es unico (pueden existir
 // duplicados por errores de carga previos), se actualiza el primero que
 // coincida en lugar de usar ON CONFLICT.
@@ -202,4 +242,4 @@ async function subirFoto(req, res) {
   }
 }
 
-module.exports = { crear, listar, obtenerPorId, cargarCsv, subirFoto };
+module.exports = { crear, listar, obtenerPorId, actualizar, cargarCsv, subirFoto };

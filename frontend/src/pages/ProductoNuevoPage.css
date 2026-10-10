@@ -22,6 +22,12 @@
   padding: 24px;
 }
 
+.producto-nuevo-card__estado {
+  margin: 0;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
 .producto-nuevo-card__error {
   margin: 0 0 16px;
   padding: 10px 14px;

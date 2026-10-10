@@ -37,3 +37,8 @@ export function cerrar(montoFinalDeclarado) {
 export function listarCerradas() {
   return apiFetch('/caja/cerradas')
 }
+
+// Detalle de una caja con sus totales y movimientos (para los cierres anteriores).
+export function obtenerPorId(id) {
+  return apiFetch(`/caja/${id}`)
+}

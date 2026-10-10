@@ -96,6 +96,14 @@ function App() {
           }
         />
         <Route
+          path="/productos/:id/editar"
+          element={
+            <ProtectedRoute rolesPermitidos={['admin']}>
+              <ProductoNuevoPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/productos/importar"
           element={
             <ProtectedRoute rolesPermitidos={['admin']}>

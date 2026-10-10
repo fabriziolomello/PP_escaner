@@ -127,10 +127,47 @@ async function crear(req, res) {
   }
 }
 
-// Historial: ultimas ventas del comercio (incluidas las anuladas, marcadas)
-// con sus items, para poder desplegar el detalle sin otro pedido.
+// Fechas del filtro: el cliente manda instantes ISO (inicio del dia local y
+// inicio del dia siguiente) para que el corte de dia sea el del comercio y no
+// el del servidor. Devuelve null si el valor no es una fecha valida.
+function fechaFiltro(valor) {
+  if (!valor) return undefined;
+  const fecha = new Date(valor);
+  return Number.isNaN(fecha.getTime()) ? null : fecha;
+}
+
+// Historial filtrable por rango de fechas [desde, hasta) y medio de pago.
+// La lista trae como mucho las ultimas 100 ventas con sus items (para
+// desplegar el detalle sin otro pedido); el resumen se calcula en SQL sobre
+// todas las ventas del filtro, asi no queda cortado por ese limite.
 async function listar(req, res) {
   const comercio_id = req.user.comercio_id;
+  const { metodo_pago } = req.query;
+  const desde = fechaFiltro(req.query.desde);
+  const hasta = fechaFiltro(req.query.hasta);
+
+  if (desde === null || hasta === null) {
+    return res.status(400).json({ error: 'Fecha invalida' });
+  }
+  if (metodo_pago && !METODOS_PAGO.includes(metodo_pago)) {
+    return res.status(400).json({ error: 'Medio de pago invalido' });
+  }
+
+  const condiciones = ['ventas.comercio_id = ?'];
+  const params = [comercio_id];
+  if (desde) {
+    condiciones.push('ventas.creado_en >= ?');
+    params.push(desde);
+  }
+  if (hasta) {
+    condiciones.push('ventas.creado_en < ?');
+    params.push(hasta);
+  }
+  if (metodo_pago) {
+    condiciones.push('ventas.metodo_pago = ?');
+    params.push(metodo_pago);
+  }
+  const where = condiciones.join(' AND ');
 
   try {
     const [ventas] = await pool.query(
@@ -139,14 +176,36 @@ async function listar(req, res) {
        FROM ventas
        JOIN usuarios ON usuarios.id = ventas.usuario_id
        LEFT JOIN cajas ON cajas.id = ventas.caja_id
-       WHERE ventas.comercio_id = ?
+       WHERE ${where}
        ORDER BY ventas.creado_en DESC, ventas.id DESC
        LIMIT ?`,
-      [comercio_id, LIMITE_HISTORIAL]
+      [...params, LIMITE_HISTORIAL]
     );
 
+    const [totales] = await pool.query(
+      `SELECT ventas.metodo_pago, SUM(ventas.total) AS total, COUNT(*) AS cantidad
+       FROM ventas
+       WHERE ${where} AND ventas.anulada = false
+       GROUP BY ventas.metodo_pago`,
+      params
+    );
+
+    const porMetodo = { efectivo: 0, mercadopago: 0, tarjeta: 0 };
+    let cantidad = 0;
+    for (const fila of totales) {
+      porMetodo[fila.metodo_pago] = aCentavos(fila.total);
+      cantidad += Number(fila.cantidad);
+    }
+    const resumen = {
+      total: (porMetodo.efectivo + porMetodo.mercadopago + porMetodo.tarjeta) / 100,
+      cantidad,
+      efectivo: porMetodo.efectivo / 100,
+      mercadopago: porMetodo.mercadopago / 100,
+      tarjeta: porMetodo.tarjeta / 100,
+    };
+
     if (ventas.length === 0) {
-      return res.json([]);
+      return res.json({ ventas: [], resumen });
     }
 
     const [items] = await pool.query(
@@ -165,13 +224,15 @@ async function listar(req, res) {
       itemsPorVenta.get(item.venta_id).push(item);
     }
 
-    res.json(
-      ventas.map((venta) => ({
+    res.json({
+      ventas: ventas.map((venta) => ({
         ...venta,
         anulada: Boolean(venta.anulada),
         items: itemsPorVenta.get(venta.id) || [],
-      }))
-    );
+      })),
+      resumen,
+      limitado: ventas.length === LIMITE_HISTORIAL,
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error al listar las ventas' });

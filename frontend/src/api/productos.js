@@ -23,6 +23,14 @@ export function crear({ codigoBarras, nombre, precio }) {
   })
 }
 
+// Solo admin. El stock no se edita acá: va por Ingreso/Egreso.
+export function actualizar(id, { codigoBarras, nombre, precio }) {
+  return apiFetch(`/productos/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify({ codigo_barras: codigoBarras, nombre, precio }),
+  })
+}
+
 // 'archivo' tiene que coincidir con upload.single('archivo') del backend
 // (ver productos.routes.js:13, multer lee ese nombre de campo del form-data).
 export function cargarCsv(archivo) {

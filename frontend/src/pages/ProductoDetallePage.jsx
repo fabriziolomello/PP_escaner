@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { Link, useParams } from 'react-router-dom'
 import PageHeader from '../components/PageHeader'
 import { ImagePlaceholderIcon, ScanIcon, UploadIcon, CartIcon } from '../components/icons'
 import { obtenerPorId, subirFoto } from '../api/productos'
@@ -109,6 +109,12 @@ export default function ProductoDetallePage() {
               <CartIcon />
               Agregar al carrito
             </button>
+
+            {esAdmin && (
+              <Link className="detalle-card__editar" to={`/productos/${producto.id}/editar`}>
+                Editar producto
+              </Link>
+            )}
           </>
         )}
       </div>

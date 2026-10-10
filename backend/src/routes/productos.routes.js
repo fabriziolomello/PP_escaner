@@ -2,7 +2,7 @@ const express = require('express');
 const multer = require('multer');
 const auth = require('../middleware/auth');
 const requireAdmin = require('../middleware/requireAdmin');
-const { crear, listar, obtenerPorId, cargarCsv, subirFoto } = require('../controllers/productos.controller');
+const { crear, listar, obtenerPorId, actualizar, cargarCsv, subirFoto } = require('../controllers/productos.controller');
 
 const router = express.Router();
 const upload = multer({ storage: multer.memoryStorage() });
@@ -22,6 +22,7 @@ const uploadFoto = multer({
 router.get('/', auth, listar);
 router.get('/:id', auth, obtenerPorId);
 router.post('/', auth, requireAdmin, crear);
+router.put('/:id', auth, requireAdmin, actualizar);
 router.post('/csv', auth, requireAdmin, upload.single('archivo'), cargarCsv);
 router.post('/:id/foto', auth, requireAdmin, uploadFoto.single('foto'), subirFoto);
 

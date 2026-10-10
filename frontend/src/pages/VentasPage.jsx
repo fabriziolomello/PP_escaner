@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import PageHeader from '../components/PageHeader'
 import { ChevronRightIcon } from '../components/icons'
 import { useAuth } from '../context/AuthContext'
@@ -6,27 +6,67 @@ import { listar, anular } from '../api/ventas'
 import { METODOS_PAGO, etiquetaMetodoPago, formatearPrecio, formatearFechaHora } from '../utils/formato'
 import './VentasPage.css'
 
-function esDeHoy(fecha) {
-  return new Date(fecha).toDateString() === new Date().toDateString()
+// Fecha local en el formato de <input type="date"> (YYYY-MM-DD).
+function fechaInput(fecha) {
+  const mes = String(fecha.getMonth() + 1).padStart(2, '0')
+  const dia = String(fecha.getDate()).padStart(2, '0')
+  return `${fecha.getFullYear()}-${mes}-${dia}`
 }
 
-// Historial de ventas: hace también de "dashboard" con el resumen del día.
-// El backend devuelve las últimas 100 ventas, cada una con sus items.
+// "Hasta" es inclusivo en pantalla; al backend va el inicio del día siguiente.
+function rangoFiltro(desde, hasta) {
+  const inicio = desde ? new Date(`${desde}T00:00`) : undefined
+  let fin
+  if (hasta) {
+    fin = new Date(`${hasta}T00:00`)
+    fin.setDate(fin.getDate() + 1)
+  }
+  return { desde: inicio, hasta: fin }
+}
+
+// Historial de ventas: hace también de "dashboard" con el resumen del
+// período filtrado (por defecto, hoy). La lista trae hasta 100 ventas con
+// sus items; el resumen lo calcula el backend sobre todo el filtro.
 export default function VentasPage() {
   const { usuario } = useAuth()
   const esAdmin = usuario.rol === 'admin'
+  const hoy = fechaInput(new Date())
+  const [desde, setDesde] = useState(hoy)
+  const [hasta, setHasta] = useState(hoy)
+  const [metodoPago, setMetodoPago] = useState('')
   const [ventas, setVentas] = useState([])
+  const [resumen, setResumen] = useState(null)
+  const [limitado, setLimitado] = useState(false)
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState('')
   const [abiertaId, setAbiertaId] = useState(null)
   const [anulandoId, setAnulandoId] = useState(null)
 
+  const rangoInvalido = Boolean(desde && hasta && desde > hasta)
+  const ultimoPedido = useRef(0)
+
+  async function cargar() {
+    // Si se cambian los filtros rápido, solo cuenta la respuesta del último pedido.
+    const pedido = ++ultimoPedido.current
+    setError('')
+    setCargando(true)
+    try {
+      const respuesta = await listar({ ...rangoFiltro(desde, hasta), metodoPago })
+      if (pedido !== ultimoPedido.current) return
+      setVentas(respuesta.ventas)
+      setResumen(respuesta.resumen)
+      setLimitado(Boolean(respuesta.limitado))
+    } catch (err) {
+      if (pedido === ultimoPedido.current) setError(err.message)
+    } finally {
+      if (pedido === ultimoPedido.current) setCargando(false)
+    }
+  }
+
   useEffect(() => {
-    listar()
-      .then(setVentas)
-      .catch((err) => setError(err.message))
-      .finally(() => setCargando(false))
-  }, [])
+    if (rangoInvalido) return
+    cargar()
+  }, [desde, hasta, metodoPago])
 
   async function handleAnular(venta) {
     if (!window.confirm(`¿Anular la venta de ${formatearPrecio(venta.total)}? Los productos vuelven al stock.`)) {
@@ -36,9 +76,8 @@ export default function VentasPage() {
     setAnulandoId(venta.id)
     try {
       await anular(venta.id)
-      setVentas((actuales) =>
-        actuales.map((actual) => (actual.id === venta.id ? { ...actual, anulada: true } : actual))
-      )
+      // Se recarga para que el resumen deje de contar la venta anulada.
+      await cargar()
     } catch (err) {
       setError(err.message)
     } finally {
@@ -46,14 +85,12 @@ export default function VentasPage() {
     }
   }
 
-  const ventasDeHoy = ventas.filter((venta) => !venta.anulada && esDeHoy(venta.creado_en))
-  const totalHoy = ventasDeHoy.reduce((suma, venta) => suma + Number(venta.total), 0)
+  const soloHoy = desde === hoy && hasta === hoy
   const totalesPorMetodo = METODOS_PAGO.map((metodo) => ({
     ...metodo,
-    total: ventasDeHoy
-      .filter((venta) => venta.metodo_pago === metodo.valor)
-      .reduce((suma, venta) => suma + Number(venta.total), 0),
+    total: resumen?.[metodo.valor] || 0,
   }))
+  const cantidadVentas = resumen?.cantidad || 0
 
   return (
     <div className="ventas-page">
@@ -62,11 +99,66 @@ export default function VentasPage() {
       <div className="ventas-card">
         <PageHeader title="Ventas" backTo="/" />
 
+        <div className="ventas-filtros">
+          <div className="ventas-filtros__fechas">
+            <label className="ventas-filtros__field">
+              <span className="ventas-filtros__label">Desde</span>
+              <input
+                className="ventas-filtros__input"
+                type="date"
+                value={desde}
+                max={hasta || undefined}
+                onChange={(event) => setDesde(event.target.value)}
+              />
+            </label>
+            <label className="ventas-filtros__field">
+              <span className="ventas-filtros__label">Hasta</span>
+              <input
+                className="ventas-filtros__input"
+                type="date"
+                value={hasta}
+                min={desde || undefined}
+                onChange={(event) => setHasta(event.target.value)}
+              />
+            </label>
+          </div>
+          <div className="ventas-filtros__metodos">
+            {[{ valor: '', etiqueta: 'Todos' }, ...METODOS_PAGO].map((metodo) => (
+              <button
+                key={metodo.valor}
+                type="button"
+                className={`ventas-filtros__metodo${metodoPago === metodo.valor ? ' ventas-filtros__metodo--activo' : ''}`}
+                onClick={() => setMetodoPago(metodo.valor)}
+              >
+                {metodo.etiqueta}
+              </button>
+            ))}
+          </div>
+          {!soloHoy && (
+            <button
+              type="button"
+              className="ventas-filtros__hoy"
+              onClick={() => {
+                setDesde(hoy)
+                setHasta(hoy)
+              }}
+            >
+              Volver a hoy
+            </button>
+          )}
+        </div>
+
+        {rangoInvalido && (
+          <p className="ventas-card__error" role="alert">
+            La fecha "desde" no puede ser posterior a "hasta".
+          </p>
+        )}
+
         <div className="ventas-resumen">
-          <p className="ventas-resumen__label">Vendido hoy</p>
-          <p className="ventas-resumen__total">{formatearPrecio(totalHoy)}</p>
+          <p className="ventas-resumen__label">{soloHoy ? 'Vendido hoy' : 'Vendido en el período'}</p>
+          <p className="ventas-resumen__total">{formatearPrecio(resumen?.total || 0)}</p>
           <p className="ventas-resumen__cantidad">
-            {ventasDeHoy.length} venta{ventasDeHoy.length === 1 ? '' : 's'}
+            {cantidadVentas} venta{cantidadVentas === 1 ? '' : 's'}
           </p>
           <div className="ventas-resumen__metodos">
             {totalesPorMetodo.map((metodo) => (
@@ -87,7 +179,13 @@ export default function VentasPage() {
         {cargando && <p className="ventas-card__estado">Cargando...</p>}
 
         {!cargando && !error && ventas.length === 0 && (
-          <p className="ventas-card__estado">Todavía no hay ventas registradas.</p>
+          <p className="ventas-card__estado">No hay ventas para este filtro.</p>
+        )}
+
+        {!cargando && limitado && (
+          <p className="ventas-card__estado">
+            Se muestran las últimas {ventas.length} ventas. Achicá el rango de fechas para ver las anteriores.
+          </p>
         )}
 
         <div className="ventas-lista">

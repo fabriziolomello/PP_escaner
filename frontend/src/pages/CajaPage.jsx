@@ -1,6 +1,15 @@
 import { useEffect, useState } from 'react'
 import PageHeader from '../components/PageHeader'
-import { MOTIVOS_CAJA, obtenerActual, abrir, registrarMovimiento, cerrar, listarCerradas } from '../api/caja'
+import { ChevronRightIcon } from '../components/icons'
+import {
+  MOTIVOS_CAJA,
+  obtenerActual,
+  abrir,
+  registrarMovimiento,
+  cerrar,
+  listarCerradas,
+  obtenerPorId,
+} from '../api/caja'
 import { formatearPrecio, formatearFechaHora } from '../utils/formato'
 import './CajaPage.css'
 
@@ -16,6 +25,78 @@ function textoDiferencia(diferencia) {
   return numero > 0 ? `Sobran ${formatearPrecio(numero)}` : `Faltan ${formatearPrecio(-numero)}`
 }
 
+// Cuentas de una caja ya cerrada: lo mismo que se ve al cerrar y en el
+// detalle de los cierres anteriores.
+function ResumenCierre({ caja }) {
+  return (
+    <div className="caja-filas">
+      <p className="caja-fila">
+        <span>Efectivo inicial</span>
+        <span>{formatearPrecio(caja.monto_inicial)}</span>
+      </p>
+      <p className="caja-fila">
+        <span>Ventas en efectivo</span>
+        <span>{formatearPrecio(caja.ventas.efectivo)}</span>
+      </p>
+      {caja.ingresos > 0 && (
+        <p className="caja-fila">
+          <span>Ingresos</span>
+          <span>+{formatearPrecio(caja.ingresos)}</span>
+        </p>
+      )}
+      {caja.egresos > 0 && (
+        <p className="caja-fila">
+          <span>Retiros y pagos</span>
+          <span>-{formatearPrecio(caja.egresos)}</span>
+        </p>
+      )}
+      <p className="caja-fila">
+        <span>Efectivo esperado</span>
+        <span>{formatearPrecio(caja.efectivo_esperado)}</span>
+      </p>
+      <p className="caja-fila">
+        <span>Efectivo contado</span>
+        <span>{formatearPrecio(caja.monto_final_declarado)}</span>
+      </p>
+      <p className="caja-fila">
+        <span>MercadoPago</span>
+        <span>{formatearPrecio(caja.ventas.mercadopago)}</span>
+      </p>
+      <p className="caja-fila">
+        <span>Tarjeta</span>
+        <span>{formatearPrecio(caja.ventas.tarjeta)}</span>
+      </p>
+      <p className="caja-fila caja-fila--total">
+        <span>
+          Total vendido ({caja.ventas.cantidad} venta{caja.ventas.cantidad === 1 ? '' : 's'})
+        </span>
+        <span>{formatearPrecio(caja.ventas.total)}</span>
+      </p>
+    </div>
+  )
+}
+
+function ListaMovimientos({ movimientos }) {
+  return (
+    <div className="caja-movimientos">
+      {movimientos.map((movimiento) => (
+        <p className="caja-movimiento" key={movimiento.id}>
+          <span>
+            {movimiento.motivo}
+            <span className="caja-movimiento__detalle">
+              {formatearFechaHora(movimiento.creado_en)} · {movimiento.usuario_nombre}
+            </span>
+          </span>
+          <span className={`caja-movimiento__monto caja-movimiento__monto--${movimiento.tipo}`}>
+            {movimiento.tipo === 'ingreso' ? '+' : '-'}
+            {formatearPrecio(movimiento.monto)}
+          </span>
+        </p>
+      ))}
+    </div>
+  )
+}
+
 // Una sola pantalla con dos estados: sin caja (abrir + últimos cierres) o
 // con caja abierta (totales del turno, movimientos de efectivo y cierre).
 export default function CajaPage() {
@@ -25,6 +106,10 @@ export default function CajaPage() {
   const [error, setError] = useState('')
   const [guardando, setGuardando] = useState(false)
   const [ultimoCierre, setUltimoCierre] = useState(null)
+  const [abiertaId, setAbiertaId] = useState(null)
+  // Detalles de cierres anteriores ya pedidos, por id (un cierre no cambia).
+  const [detalles, setDetalles] = useState({})
+  const [errorDetalle, setErrorDetalle] = useState('')
 
   const [montoInicial, setMontoInicial] = useState('')
   const [tipoMovimiento, setTipoMovimiento] = useState('egreso')
@@ -95,6 +180,22 @@ export default function CajaPage() {
     })
   }
 
+  async function toggleCierre(id) {
+    if (abiertaId === id) {
+      setAbiertaId(null)
+      return
+    }
+    setAbiertaId(id)
+    setErrorDetalle('')
+    if (detalles[id]) return
+    try {
+      const detalle = await obtenerPorId(id)
+      setDetalles((actuales) => ({ ...actuales, [id]: detalle }))
+    } catch (err) {
+      setErrorDetalle(err.message)
+    }
+  }
+
   const diferenciaPrevia =
     caja && montoContado !== '' ? Number(montoContado) - Number(caja.efectivo_esperado) : null
 
@@ -118,28 +219,7 @@ export default function CajaPage() {
             <p className={`caja-cierre__diferencia ${claseDiferencia(ultimoCierre.diferencia)}`}>
               {textoDiferencia(ultimoCierre.diferencia)}
             </p>
-            <div className="caja-filas">
-              <p className="caja-fila">
-                <span>Efectivo esperado</span>
-                <span>{formatearPrecio(ultimoCierre.efectivo_esperado)}</span>
-              </p>
-              <p className="caja-fila">
-                <span>Efectivo contado</span>
-                <span>{formatearPrecio(ultimoCierre.monto_final_declarado)}</span>
-              </p>
-              <p className="caja-fila">
-                <span>MercadoPago</span>
-                <span>{formatearPrecio(ultimoCierre.ventas.mercadopago)}</span>
-              </p>
-              <p className="caja-fila">
-                <span>Tarjeta</span>
-                <span>{formatearPrecio(ultimoCierre.ventas.tarjeta)}</span>
-              </p>
-              <p className="caja-fila caja-fila--total">
-                <span>Total vendido</span>
-                <span>{formatearPrecio(ultimoCierre.ventas.total)}</span>
-              </p>
-            </div>
+            <ResumenCierre caja={ultimoCierre} />
           </div>
         )}
 
@@ -263,24 +343,7 @@ export default function CajaPage() {
               </button>
             </form>
 
-            {caja.movimientos.length > 0 && (
-              <div className="caja-movimientos">
-                {caja.movimientos.map((movimiento) => (
-                  <p className="caja-movimiento" key={movimiento.id}>
-                    <span>
-                      {movimiento.motivo}
-                      <span className="caja-movimiento__detalle">
-                        {formatearFechaHora(movimiento.creado_en)} · {movimiento.usuario_nombre}
-                      </span>
-                    </span>
-                    <span className={`caja-movimiento__monto caja-movimiento__monto--${movimiento.tipo}`}>
-                      {movimiento.tipo === 'ingreso' ? '+' : '-'}
-                      {formatearPrecio(movimiento.monto)}
-                    </span>
-                  </p>
-                ))}
-              </div>
-            )}
+            {caja.movimientos.length > 0 && <ListaMovimientos movimientos={caja.movimientos} />}
 
             <p className="caja-card__seccion">Cerrar caja</p>
             <form className="caja-form" onSubmit={handleCerrar}>
@@ -312,17 +375,55 @@ export default function CajaPage() {
           <>
             <p className="caja-card__seccion">Últimos cierres</p>
             <div className="caja-historial">
-              {cerradas.map((cerrada) => (
-                <p className="caja-historial__item" key={cerrada.id}>
-                  <span>
-                    {formatearFechaHora(cerrada.cerrada_en)}
-                    <span className="caja-movimiento__detalle">Cerró {cerrada.usuario_cierre_nombre}</span>
-                  </span>
-                  <span className={`caja-historial__diferencia ${claseDiferencia(cerrada.diferencia)}`}>
-                    {textoDiferencia(cerrada.diferencia)}
-                  </span>
-                </p>
-              ))}
+              {cerradas.map((cerrada) => {
+                const abierta = abiertaId === cerrada.id
+                const detalle = detalles[cerrada.id]
+                return (
+                  <div className="caja-historial__item" key={cerrada.id}>
+                    <button
+                      className="caja-historial__resumen"
+                      onClick={() => toggleCierre(cerrada.id)}
+                      aria-expanded={abierta}
+                    >
+                      <span className="caja-historial__info">
+                        {formatearFechaHora(cerrada.cerrada_en)}
+                        <span className="caja-movimiento__detalle">Cerró {cerrada.usuario_cierre_nombre}</span>
+                      </span>
+                      <span className={`caja-historial__diferencia ${claseDiferencia(cerrada.diferencia)}`}>
+                        {textoDiferencia(cerrada.diferencia)}
+                      </span>
+                      <ChevronRightIcon
+                        className={`caja-historial__chevron${abierta ? ' caja-historial__chevron--abierto' : ''}`}
+                      />
+                    </button>
+
+                    {abierta && (
+                      <div className="caja-historial__detalle">
+                        {!detalle && !errorDetalle && <p className="caja-card__estado">Cargando...</p>}
+                        {!detalle && errorDetalle && (
+                          <p className="caja-card__error" role="alert">
+                            {errorDetalle}
+                          </p>
+                        )}
+                        {detalle && (
+                          <>
+                            <p className="caja-card__texto">
+                              Abierta {formatearFechaHora(detalle.abierta_en)} por {detalle.usuario_apertura_nombre}
+                            </p>
+                            <ResumenCierre caja={detalle} />
+                            {detalle.movimientos.length > 0 && (
+                              <>
+                                <p className="caja-historial__subtitulo">Movimientos de efectivo</p>
+                                <ListaMovimientos movimientos={detalle.movimientos} />
+                              </>
+                            )}
+                          </>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
             </div>
           </>
         )}

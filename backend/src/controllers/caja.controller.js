@@ -259,4 +259,26 @@ async function listarCerradas(req, res) {
   }
 }
 
-module.exports = { obtenerActual, abrir, registrarMovimiento, cerrar, listarCerradas };
+// Detalle de una caja (abierta o cerrada) con los mismos totales que se ven
+// durante el turno, para revisar un cierre anterior.
+async function obtenerPorId(req, res) {
+  const comercio_id = req.user.comercio_id;
+  const { id } = req.params;
+
+  try {
+    const [cajas] = await pool.query(`${SELECT_CAJA} WHERE cajas.id = ? AND cajas.comercio_id = ?`, [
+      id,
+      comercio_id,
+    ]);
+    if (cajas.length === 0) {
+      return res.status(404).json({ error: 'Caja no encontrada' });
+    }
+    const resumen = await calcularResumen(pool, cajas[0]);
+    res.json({ ...cajas[0], ...resumen });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al obtener la caja' });
+  }
+}
+
+module.exports = { obtenerActual, abrir, registrarMovimiento, cerrar, listarCerradas, obtenerPorId };
