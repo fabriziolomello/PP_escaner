@@ -16,6 +16,8 @@ CREATE TABLE IF NOT EXISTS usuarios (
   password_hash VARCHAR(255) NOT NULL,
   rol VARCHAR(20) NOT NULL CHECK (rol IN ('admin', 'empleado')),
   comercio_id INT NOT NULL,
+  -- Desactivado: no puede iniciar sesion (se conserva por sus ventas).
+  activo BOOLEAN NOT NULL DEFAULT true,
   creado_en TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (comercio_id) REFERENCES comercios(id)
 );
@@ -28,12 +30,15 @@ CREATE TABLE IF NOT EXISTS productos (
   foto_url TEXT,
   stock INT NOT NULL DEFAULT 0,
   comercio_id INT NOT NULL,
+  -- Desactivado: no aparece al buscar/escanear ni se puede vender.
+  activo BOOLEAN NOT NULL DEFAULT true,
   creado_en TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (comercio_id) REFERENCES comercios(id)
 );
 
--- codigo_barras no es unico (puede haber duplicados por errores de carga),
--- pero se busca siempre dentro de un comercio -> indice compuesto.
+-- No se permiten codigos repetidos dentro de un comercio (se controla en
+-- productos.controller.js; no es UNIQUE porque bases viejas pueden tener
+-- duplicados de antes de ese control). Se busca siempre dentro de un comercio.
 CREATE INDEX idx_productos_comercio_codigo
   ON productos (comercio_id, codigo_barras);
 

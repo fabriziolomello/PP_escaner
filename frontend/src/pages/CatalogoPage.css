@@ -90,3 +90,17 @@
   display: flex;
   flex-direction: column;
 }
+
+.catalogo-desactivados {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+}
+
+.catalogo-desactivados input {
+  accent-color: var(--color-accent);
+}

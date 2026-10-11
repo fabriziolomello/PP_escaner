@@ -10,6 +10,7 @@ import ProductoNuevoPage from './pages/ProductoNuevoPage'
 import ImportarCsvPage from './pages/ImportarCsvPage'
 import EmpleadosPage from './pages/EmpleadosPage'
 import EmpleadoNuevoPage from './pages/EmpleadoNuevoPage'
+import EmpleadoDetallePage from './pages/EmpleadoDetallePage'
 import CatalogoPage from './pages/CatalogoPage'
 import VentasPage from './pages/VentasPage'
 import MovimientoStockPage from './pages/MovimientoStockPage'
@@ -133,6 +134,14 @@ function App() {
           element={
             <ProtectedRoute rolesPermitidos={['admin']}>
               <EmpleadoNuevoPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/empleados/:id"
+          element={
+            <ProtectedRoute rolesPermitidos={['admin']}>
+              <EmpleadoDetallePage />
             </ProtectedRoute>
           }
         />

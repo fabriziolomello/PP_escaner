@@ -14,6 +14,10 @@ const suscripcionActiva = require('./middleware/suscripcionActiva');
 
 const app = express();
 
+// Detras del proxy de Hostinger: req.ip toma la IP real del cliente (la usa
+// el limite de intentos de login) en vez de la del proxy.
+app.set('trust proxy', 1);
+
 app.use(cors());
 app.use(express.json());
 

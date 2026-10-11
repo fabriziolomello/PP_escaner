@@ -11,7 +11,7 @@ import './Carrito.css'
 // agrega ProtectedRoute en todas las páginas privadas: "Vender" no es un
 // ítem del menú, se vende desde donde se esté agregando productos.
 export default function Carrito() {
-  const { items, cambiarCantidad, vaciar, cantidadTotal, total } = useCarrito()
+  const { items, cambiarCantidad, actualizarStock, vaciar, cantidadTotal, total } = useCarrito()
   const [abierto, setAbierto] = useState(false)
   const [metodoPago, setMetodoPago] = useState('')
   const [vendiendo, setVendiendo] = useState(false)
@@ -47,6 +47,7 @@ export default function Carrito() {
       if (err.codigo === 'CAJA_CERRADA') {
         setPideCaja(true)
       } else {
+        if (err.codigo === 'SIN_STOCK') actualizarStock(err.productos)
         setError(err.message)
       }
     } finally {
@@ -118,7 +119,9 @@ export default function Carrito() {
                       {formatearPrecio(item.precio * item.cantidad)}
                     </span>
                     {item.cantidad > item.stock && (
-                      <span className="carrito-item__aviso">Supera el stock registrado ({item.stock})</span>
+                      <span className="carrito-item__aviso">
+                        {item.stock > 0 ? `Solo hay ${item.stock} en stock` : 'Sin stock: sacalo del carrito'}
+                      </span>
                     )}
                   </span>
 
@@ -132,6 +135,7 @@ export default function Carrito() {
                     <span>{item.cantidad}</span>
                     <button
                       onClick={() => cambiarCantidad(item.producto_id, item.cantidad + 1)}
+                      disabled={item.cantidad >= item.stock}
                       aria-label="Sumar uno"
                     >
                       <PlusIcon width="14" height="14" />

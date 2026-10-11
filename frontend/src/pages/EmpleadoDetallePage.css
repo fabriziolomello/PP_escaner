@@ -1,0 +1,157 @@
+.empleado-detalle-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  /* Sin eyebrow arriba de la tarjeta, así que necesita más padding-top
+     para no chocar con el botón hamburguesa fijo del NavBar. */
+  padding: 72px 20px 24px;
+  background-color: var(--color-bg);
+}
+
+.empleado-detalle-card {
+  width: 100%;
+  max-width: 360px;
+  background-color: var(--color-surface);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+}
+
+.empleado-detalle-card__error {
+  margin: 0 0 16px;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  background-color: rgba(242, 106, 106, 0.12);
+  color: var(--color-danger);
+  font-size: 13px;
+}
+
+.empleado-detalle-card__estado {
+  margin: 0;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+.empleado-detalle-card__datos {
+  padding-bottom: 16px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.empleado-detalle-card__nombre {
+  margin: 0 0 4px;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.empleado-detalle-card__email {
+  margin: 0;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  overflow-wrap: anywhere;
+}
+
+.empleado-detalle-card__inactivo {
+  margin: 8px 0 0;
+  font-size: 13px;
+  color: var(--color-danger);
+}
+
+.empleado-detalle-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.empleado-detalle-form__field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  text-align: left;
+}
+
+.empleado-detalle-form__label {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+.empleado-detalle-form__password {
+  display: flex;
+  gap: 8px;
+}
+
+.empleado-detalle-form__input {
+  flex: 1;
+  min-width: 0;
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  background-color: var(--color-surface-alt);
+  color: var(--color-text);
+  font-size: 14px;
+}
+
+.empleado-detalle-form__input:focus {
+  outline: none;
+  border-color: var(--color-accent);
+}
+
+.empleado-detalle-form__ver {
+  padding: 0 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  background-color: var(--color-surface-alt);
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.empleado-detalle-form__hint {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.empleado-detalle-form__ok {
+  margin: 0;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  background-color: var(--color-accent-bg);
+  color: var(--color-accent);
+  font-size: 13px;
+}
+
+.empleado-detalle-form__submit {
+  width: 100%;
+  padding: 13px 14px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background-color: #ffffff;
+  color: var(--color-button-text-on-white);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.empleado-detalle-card__activo {
+  margin-top: 24px;
+  width: 100%;
+  padding: 13px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background-color: var(--color-surface-alt);
+  color: var(--color-text);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.empleado-detalle-card__activo--desactivar {
+  border-color: rgba(242, 106, 106, 0.4);
+  color: var(--color-danger);
+}
+
+.empleado-detalle-form__submit:disabled,
+.empleado-detalle-card__activo:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

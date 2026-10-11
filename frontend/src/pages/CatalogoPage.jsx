@@ -8,6 +8,9 @@ import './CatalogoPage.css'
 
 export default function CatalogoPage() {
   const [busqueda, setBusqueda] = useState('')
+  // Los desactivados no aparecen en la lista normal; se ven aparte para
+  // poder reactivarlos desde su detalle.
+  const [verDesactivados, setVerDesactivados] = useState(false)
   const [productos, setProductos] = useState([])
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState('')
@@ -18,14 +21,14 @@ export default function CatalogoPage() {
     setError('')
 
     const timeoutId = setTimeout(() => {
-      listar(nombreBuscado ? { nombre: nombreBuscado } : {})
+      listar({ nombre: nombreBuscado || undefined, desactivados: verDesactivados })
         .then(setProductos)
         .catch((err) => setError(err.message))
         .finally(() => setCargando(false))
     }, 300)
 
     return () => clearTimeout(timeoutId)
-  }, [busqueda])
+  }, [busqueda, verDesactivados])
 
   return (
     <div className="catalogo-page">
@@ -55,6 +58,15 @@ export default function CatalogoPage() {
           </Link>
         </div>
 
+        <label className="catalogo-desactivados">
+          <input
+            type="checkbox"
+            checked={verDesactivados}
+            onChange={(event) => setVerDesactivados(event.target.checked)}
+          />
+          Ver productos desactivados
+        </label>
+
         {error && (
           <p className="catalogo-card__error" role="alert">
             {error}
@@ -66,6 +78,7 @@ export default function CatalogoPage() {
         {!cargando && !error && (
           <p className="catalogo-card__contador">
             {productos.length} producto{productos.length === 1 ? '' : 's'}
+            {verDesactivados && ` desactivado${productos.length === 1 ? '' : 's'}`}
           </p>
         )}
 

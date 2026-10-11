@@ -147,3 +147,40 @@
   text-align: center;
   text-decoration: none;
 }
+
+.detalle-card__inactivo {
+  margin: 0 0 16px;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  background-color: rgba(242, 106, 106, 0.12);
+  color: var(--color-danger);
+  font-size: 13px;
+}
+
+.detalle-card__activo {
+  margin-top: 10px;
+  width: 100%;
+  padding: 13px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface-alt);
+  color: var(--color-text);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.detalle-card__activo--desactivar {
+  border-color: rgba(242, 106, 106, 0.4);
+  color: var(--color-danger);
+}
+
+.detalle-card__activo:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.detalle-card__agregar:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

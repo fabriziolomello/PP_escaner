@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import PageHeader from '../components/PageHeader'
-import { PlusIcon, MoreIcon } from '../components/icons'
+import { PlusIcon, ChevronRightIcon } from '../components/icons'
 import { listar } from '../api/empleados'
 import './EmpleadosPage.css'
 
@@ -52,16 +52,22 @@ export default function EmpleadosPage() {
 
         <div className="empleados-lista">
           {empleados.map((empleado) => (
-            <div className="empleado-item" key={empleado.id}>
+            <Link
+              className={`empleado-item${empleado.activo ? '' : ' empleado-item--inactivo'}`}
+              key={empleado.id}
+              to={`/empleados/${empleado.id}`}
+            >
               <span className="empleado-item__avatar">{iniciales(empleado.nombre)}</span>
               <span className="empleado-item__info">
                 <span className="empleado-item__nombre">{empleado.nombre}</span>
-                <span className="empleado-item__email">{empleado.email}</span>
+                <span className="empleado-item__email">
+                  {empleado.activo ? empleado.email : 'Desactivado'}
+                </span>
               </span>
               <span className="empleado-item__mas" aria-hidden="true">
-                <MoreIcon />
+                <ChevronRightIcon />
               </span>
-            </div>
+            </Link>
           ))}
         </div>
       </div>

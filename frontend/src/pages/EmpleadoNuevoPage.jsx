@@ -70,7 +70,7 @@ export default function EmpleadoNuevoPage() {
               required
             />
             <span className="empleado-nuevo-form__hint">
-              El empleado va a poder cambiarla luego de iniciar sesión.
+              Si se la olvida, podés ponerle una nueva desde Empleados.
             </span>
           </label>
 

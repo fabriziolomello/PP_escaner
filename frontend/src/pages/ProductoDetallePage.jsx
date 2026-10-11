@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import PageHeader from '../components/PageHeader'
 import { ImagePlaceholderIcon, ScanIcon, UploadIcon, CartIcon } from '../components/icons'
-import { obtenerPorId, subirFoto } from '../api/productos'
+import { obtenerPorId, subirFoto, cambiarActivo } from '../api/productos'
 import { useAuth } from '../context/AuthContext'
 import { useCarrito } from '../context/CarritoContext'
 import './ProductoDetallePage.css'
@@ -17,6 +17,7 @@ export default function ProductoDetallePage() {
   const [producto, setProducto] = useState(null)
   const [error, setError] = useState('')
   const [subiendoFoto, setSubiendoFoto] = useState(false)
+  const [cambiandoActivo, setCambiandoActivo] = useState(false)
 
   useEffect(() => {
     setProducto(null)
@@ -54,6 +55,25 @@ export default function ProductoDetallePage() {
     }
   }
 
+  async function handleActivo() {
+    const activo = !producto.activo
+    if (
+      !activo &&
+      !window.confirm(`¿Desactivar ${producto.nombre}? No va a aparecer al buscar ni se va a poder vender.`)
+    ) {
+      return
+    }
+    setError('')
+    setCambiandoActivo(true)
+    try {
+      setProducto(await cambiarActivo(id, activo))
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setCambiandoActivo(false)
+    }
+  }
+
   return (
     <div className="detalle-page">
       <p className="detalle-page__eyebrow">Resultado / detalle</p>
@@ -70,6 +90,12 @@ export default function ProductoDetallePage() {
 
         {producto && (
           <>
+            {!producto.activo && (
+              <p className="detalle-card__inactivo">
+                Producto desactivado: no aparece al buscar ni se puede vender.
+              </p>
+            )}
+
             <div className="detalle-card__imagen">
               {producto.foto_url ? (
                 <img src={producto.foto_url} alt={producto.nombre} />
@@ -104,16 +130,35 @@ export default function ProductoDetallePage() {
               {producto.codigo_barras}
             </div>
 
-            {/* Se puede vender aunque el stock registrado no alcance (ver ventas.controller.js). */}
-            <button className="detalle-card__agregar" onClick={() => agregar(producto)}>
-              <CartIcon />
-              Agregar al carrito
-            </button>
+            {/* No se puede agregar mas de lo que hay en stock (ver ventas.controller.js). */}
+            {producto.activo && (
+              <button
+                className="detalle-card__agregar"
+                onClick={() => agregar(producto)}
+                disabled={enCarrito >= producto.stock}
+              >
+                <CartIcon />
+                {producto.stock <= 0
+                  ? 'Sin stock'
+                  : enCarrito >= producto.stock
+                    ? 'Todo el stock ya está en el carrito'
+                    : 'Agregar al carrito'}
+              </button>
+            )}
 
             {esAdmin && (
-              <Link className="detalle-card__editar" to={`/productos/${producto.id}/editar`}>
-                Editar producto
-              </Link>
+              <>
+                <Link className="detalle-card__editar" to={`/productos/${producto.id}/editar`}>
+                  Editar producto
+                </Link>
+                <button
+                  className={`detalle-card__activo${producto.activo ? ' detalle-card__activo--desactivar' : ''}`}
+                  onClick={handleActivo}
+                  disabled={cambiandoActivo}
+                >
+                  {cambiandoActivo ? '...' : producto.activo ? 'Desactivar producto' : 'Reactivar producto'}
+                </button>
+              </>
             )}
           </>
         )}

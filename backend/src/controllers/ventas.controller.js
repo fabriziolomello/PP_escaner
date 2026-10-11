@@ -26,10 +26,10 @@ function normalizarItems(items) {
   return cantidades;
 }
 
-// La venta nunca se bloquea por falta de stock: si el conteo esta mal, en
-// el mostrador igual hay que poder vender. El stock puede quedar negativo,
-// y eso mismo avisa que hay que corregirlo desde Ingreso/Egreso.
-// Venta, items y descuento de stock van en una sola transaccion.
+// No se puede vender mas de lo que hay en stock: el stock nunca queda
+// negativo. Si el conteo esta mal, primero se corrige desde Ingreso/Egreso.
+// Venta, items y descuento de stock van en una sola transaccion (el FOR
+// UPDATE evita que dos ventas simultaneas vendan la misma ultima unidad).
 // Sin caja abierta no se vende: cada venta queda asociada a la caja del turno.
 async function crear(req, res) {
   const { metodo_pago } = req.body;
@@ -63,7 +63,7 @@ async function crear(req, res) {
     // FOR UPDATE + ORDER BY id: bloquear siempre en el mismo orden evita
     // deadlocks entre ventas concurrentes que comparten productos.
     const [productos] = await connection.query(
-      `SELECT id, nombre, precio FROM productos
+      `SELECT id, nombre, precio, stock, activo FROM productos
        WHERE id IN (?) AND comercio_id = ?
        ORDER BY id
        FOR UPDATE`,
@@ -73,6 +73,23 @@ async function crear(req, res) {
     if (productos.length !== productoIds.length) {
       await connection.rollback();
       return res.status(404).json({ error: 'Algun producto de la venta no existe' });
+    }
+    const desactivado = productos.find((producto) => !producto.activo);
+    if (desactivado) {
+      await connection.rollback();
+      return res
+        .status(409)
+        .json({ error: `${desactivado.nombre} está desactivado: sacalo del carrito para vender` });
+    }
+    const sinStock = productos.filter((producto) => producto.stock < cantidades.get(producto.id));
+    if (sinStock.length > 0) {
+      await connection.rollback();
+      const detalle = sinStock.map((producto) => `${producto.nombre} (hay ${Math.max(0, producto.stock)})`);
+      return res.status(409).json({
+        error: `No hay stock suficiente: ${detalle.join(', ')}`,
+        codigo: 'SIN_STOCK',
+        productos: sinStock.map((producto) => ({ producto_id: producto.id, stock: producto.stock })),
+      });
     }
 
     const items = productos.map((producto) => {

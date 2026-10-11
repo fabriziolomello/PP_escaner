@@ -8,7 +8,12 @@ import './Login.css'
 export default function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
+  // Motivo por el que se cerró la sesión (ver api/client.js), si lo hay.
+  const [error, setError] = useState(() => {
+    const aviso = sessionStorage.getItem('avisoLogin') || ''
+    sessionStorage.removeItem('avisoLogin')
+    return aviso
+  })
   const [cargando, setCargando] = useState(false)
 
   const { login } = useAuth()

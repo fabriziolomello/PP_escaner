@@ -1,11 +1,14 @@
 import apiFetch from './client'
 
 // Búsqueda compartida por el flujo de escaneo (codigoBarras) y por nombre
-// (ver productos.controller.js:33-66). Sin filtros, trae el catálogo entero.
-export function listar({ nombre, codigoBarras } = {}) {
+// (ver productos.controller.js). Sin filtros, trae el catálogo entero.
+// Solo productos activos; con desactivados: true (solo admin) trae
+// únicamente los desactivados.
+export function listar({ nombre, codigoBarras, desactivados } = {}) {
   const params = new URLSearchParams()
   if (nombre) params.set('nombre', nombre)
   if (codigoBarras) params.set('codigo_barras', codigoBarras)
+  if (desactivados) params.set('desactivados', '1')
 
   const query = params.toString()
   return apiFetch(`/productos${query ? `?${query}` : ''}`)
@@ -28,6 +31,14 @@ export function actualizar(id, { codigoBarras, nombre, precio }) {
   return apiFetch(`/productos/${id}`, {
     method: 'PUT',
     body: JSON.stringify({ codigo_barras: codigoBarras, nombre, precio }),
+  })
+}
+
+// Solo admin. Desactivado no aparece al buscar/escanear ni se puede vender.
+export function cambiarActivo(id, activo) {
+  return apiFetch(`/productos/${id}/activo`, {
+    method: 'PATCH',
+    body: JSON.stringify({ activo }),
   })
 }
 

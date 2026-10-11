@@ -29,6 +29,15 @@ export default async function apiFetch(path, options = {}) {
     // Algunos errores traen un código para reaccionar distinto en la UI
     // (ej. 'CAJA_CERRADA' al vender sin caja abierta).
     error.codigo = data?.codigo
+    // Sesión vencida (el JWT dura 8 h) o usuario desactivado por el admin:
+    // se cierra la sesión y se vuelve al login con el motivo. Se excluye
+    // /auth/ porque ahí un 401 es "contraseña incorrecta", no sesión vencida.
+    if (response.status === 401 && token && !path.startsWith('/auth/')) {
+      localStorage.removeItem('token')
+      localStorage.removeItem('usuario')
+      sessionStorage.setItem('avisoLogin', error.message)
+      window.location.assign('/login')
+    }
     // La suscripción venció en medio de la sesión: solo queda la pantalla de
     // pago. Recarga completa para que SuscripcionContext vuelva a consultar.
     if (error.codigo === 'SUSCRIPCION_VENCIDA' && window.location.pathname !== '/suscripcion') {
