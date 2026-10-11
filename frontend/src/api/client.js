@@ -29,6 +29,11 @@ export default async function apiFetch(path, options = {}) {
     // Algunos errores traen un código para reaccionar distinto en la UI
     // (ej. 'CAJA_CERRADA' al vender sin caja abierta).
     error.codigo = data?.codigo
+    // La suscripción venció en medio de la sesión: solo queda la pantalla de
+    // pago. Recarga completa para que SuscripcionContext vuelva a consultar.
+    if (error.codigo === 'SUSCRIPCION_VENCIDA' && window.location.pathname !== '/suscripcion') {
+      window.location.assign('/suscripcion')
+    }
     throw error
   }
 

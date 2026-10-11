@@ -14,6 +14,7 @@ import CatalogoPage from './pages/CatalogoPage'
 import VentasPage from './pages/VentasPage'
 import MovimientoStockPage from './pages/MovimientoStockPage'
 import CajaPage from './pages/CajaPage'
+import SuscripcionPage from './pages/SuscripcionPage'
 import ProtectedRoute from './routes/ProtectedRoute'
 
 function App() {
@@ -76,6 +77,14 @@ function App() {
           element={
             <ProtectedRoute>
               <CajaPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/suscripcion"
+          element={
+            <ProtectedRoute permitirVencida>
+              <SuscripcionPage />
             </ProtectedRoute>
           }
         />

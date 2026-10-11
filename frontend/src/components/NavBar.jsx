@@ -10,6 +10,7 @@ import {
   ReceiptIcon,
   SwapIcon,
   CashIcon,
+  CardIcon,
 } from './icons'
 import './NavBar.css'
 
@@ -113,6 +114,14 @@ export default function NavBar() {
               >
                 <PeopleIcon />
                 Empleados
+              </Link>
+              <Link
+                className={`navbar-link${esActiva('/suscripcion') ? ' navbar-link--active' : ''}`}
+                to="/suscripcion"
+                onClick={cerrar}
+              >
+                <CardIcon />
+                Suscripción
               </Link>
             </>
           )}

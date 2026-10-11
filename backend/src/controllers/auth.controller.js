@@ -1,6 +1,7 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const pool = require('../config/db');
+const { DIAS_PRUEBA } = require('./suscripcion.controller');
 
 const SALT_ROUNDS = 10;
 
@@ -24,9 +25,10 @@ async function registrarComercio(req, res) {
   try {
     await connection.beginTransaction();
 
+    // Arranca con la prueba gratis; despues paga por mes (ver suscripcion.controller.js).
     const [comercioResult] = await connection.query(
-      'INSERT INTO comercios (nombre) VALUES (?)',
-      [nombre_comercio]
+      'INSERT INTO comercios (nombre, vence_en) VALUES (?, NOW() + INTERVAL ? DAY)',
+      [nombre_comercio, DIAS_PRUEBA]
     );
     const comercio = { id: comercioResult.insertId, nombre: nombre_comercio };
 

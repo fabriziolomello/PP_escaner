@@ -8,6 +8,9 @@ const empleadosRoutes = require('./routes/empleados.routes');
 const ventasRoutes = require('./routes/ventas.routes');
 const stockRoutes = require('./routes/stock.routes');
 const cajaRoutes = require('./routes/caja.routes');
+const suscripcionRoutes = require('./routes/suscripcion.routes');
+const auth = require('./middleware/auth');
+const suscripcionActiva = require('./middleware/suscripcionActiva');
 
 const app = express();
 
@@ -15,11 +18,16 @@ app.use(cors());
 app.use(express.json());
 
 app.use('/api/auth', authRoutes);
-app.use('/api/productos', productosRoutes);
-app.use('/api/empleados', empleadosRoutes);
-app.use('/api/ventas', ventasRoutes);
-app.use('/api/stock', stockRoutes);
-app.use('/api/caja', cajaRoutes);
+app.use('/api/suscripcion', suscripcionRoutes);
+
+// Con la suscripcion vencida se bloquea todo lo demas. Las rutas ya aplican
+// auth por su cuenta; aca se repite porque suscripcionActiva necesita req.user.
+const conSuscripcion = [auth, suscripcionActiva];
+app.use('/api/productos', conSuscripcion, productosRoutes);
+app.use('/api/empleados', conSuscripcion, empleadosRoutes);
+app.use('/api/ventas', conSuscripcion, ventasRoutes);
+app.use('/api/stock', conSuscripcion, stockRoutes);
+app.use('/api/caja', conSuscripcion, cajaRoutes);
 
 // Build del frontend (ver "npm run build:frontend"), servido desde el mismo
 // backend para no depender de un dominio separado.

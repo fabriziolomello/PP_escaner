@@ -4,6 +4,8 @@
 CREATE TABLE IF NOT EXISTS comercios (
   id INT AUTO_INCREMENT PRIMARY KEY,
   nombre VARCHAR(150) NOT NULL,
+  -- Hasta cuando esta paga (o en prueba) la suscripcion; ver suscripcion.controller.js.
+  vence_en DATETIME NOT NULL,
   creado_en TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -105,4 +107,17 @@ CREATE TABLE IF NOT EXISTS movimientos_caja (
   creado_en TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (caja_id) REFERENCES cajas(id),
   FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
+);
+
+-- Un registro por pago aprobado de la suscripcion. mp_payment_id es UNIQUE
+-- para que el mismo pago (webhook repetido + vuelta del checkout) no sume dos meses.
+CREATE TABLE IF NOT EXISTS pagos_suscripcion (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  comercio_id INT NOT NULL,
+  mp_payment_id VARCHAR(50) NOT NULL UNIQUE,
+  monto NUMERIC(12, 2) NOT NULL,
+  vence_hasta DATETIME NULL,
+  creado_en TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (comercio_id) REFERENCES comercios(id),
+  INDEX idx_pagos_suscripcion_comercio (comercio_id, creado_en)
 );

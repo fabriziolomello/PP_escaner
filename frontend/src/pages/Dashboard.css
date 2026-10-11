@@ -36,6 +36,33 @@
   font-weight: 700;
 }
 
+.dashboard-aviso {
+  margin-bottom: 16px;
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  background-color: rgba(250, 204, 21, 0.12);
+  color: #facc15;
+}
+
+.dashboard-aviso--gracia {
+  background-color: rgba(242, 106, 106, 0.12);
+  color: var(--color-danger);
+}
+
+.dashboard-aviso__texto {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.dashboard-aviso__link {
+  display: inline-block;
+  margin-top: 6px;
+  color: inherit;
+  font-size: 13px;
+  font-weight: 600;
+}
+
 .dashboard-action {
   display: flex;
   align-items: center;

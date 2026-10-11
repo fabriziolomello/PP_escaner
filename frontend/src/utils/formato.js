@@ -17,6 +17,14 @@ export function formatearPrecio(valor) {
   return `${numero < 0 ? '-' : ''}$${Math.abs(numero).toFixed(2)}`
 }
 
+export function formatearFecha(fecha) {
+  return new Date(fecha).toLocaleDateString('es-AR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  })
+}
+
 export function formatearFechaHora(fecha) {
   return new Date(fecha).toLocaleString('es-AR', {
     day: '2-digit',
