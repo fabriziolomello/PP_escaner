@@ -41,7 +41,7 @@ async function enviar({ para, asunto, html, texto }) {
     return;
   }
   await transporte.sendMail({
-    from: `"Escaner" <${process.env.EMAIL_FROM || process.env.SMTP_USER}>`,
+    from: `"Bipeo" <${process.env.EMAIL_FROM || process.env.SMTP_USER}>`,
     to: para,
     subject: asunto,
     html,
@@ -50,23 +50,23 @@ async function enviar({ para, asunto, html, texto }) {
 }
 
 function enviarVerificacion({ para, nombre, comercio, link }) {
-  const asunto = '¡Gracias por registrarte en Escaner! Confirmá tu email';
+  const asunto = '¡Gracias por registrarte en Bipeo! Confirmá tu email';
   const html = armarHtml({
     titulo: `¡Gracias por sumarte, ${escaparHtml(nombre)}!`,
     parrafos: [
-      `Ya creamos <strong>${escaparHtml(comercio)}</strong> en Escaner. Gracias por confiar en nosotros para manejar las ventas, el stock y la caja de tu comercio.`,
+      `Ya creamos <strong>${escaparHtml(comercio)}</strong> en Bipeo. Gracias por confiar en nosotros para manejar las ventas, el stock y la caja de tu comercio.`,
       'Para empezar a usarlo, confirmá tu email tocando el botón:',
     ],
     boton: 'Confirmar mi email',
     link,
     pie: 'El link vence en 24 horas. Si no creaste esta cuenta, ignorá este email.',
   });
-  const texto = `¡Gracias por sumarte, ${nombre}!\n\nYa creamos ${comercio} en Escaner. Para empezar a usarlo, confirmá tu email entrando a este link:\n${link}\n\nEl link vence en 24 horas. Si no creaste esta cuenta, ignorá este email.`;
+  const texto = `¡Gracias por sumarte, ${nombre}!\n\nYa creamos ${comercio} en Bipeo. Para empezar a usarlo, confirmá tu email entrando a este link:\n${link}\n\nEl link vence en 24 horas. Si no creaste esta cuenta, ignorá este email.`;
   return enviar({ para, asunto, html, texto });
 }
 
 function enviarRecuperacion({ para, nombre, link }) {
-  const asunto = 'Recuperar tu contraseña de Escaner';
+  const asunto = 'Recuperar tu contraseña de Bipeo';
   const html = armarHtml({
     titulo: 'Recuperar contraseña',
     parrafos: [
@@ -77,7 +77,7 @@ function enviarRecuperacion({ para, nombre, link }) {
     link,
     pie: 'El link vence en 1 hora y se puede usar una sola vez. Si no lo pediste, ignorá este email: tu contraseña no cambia.',
   });
-  const texto = `Hola ${nombre}, recibimos un pedido para cambiar la contraseña de tu cuenta de Escaner.\n\nElegí una contraseña nueva entrando a este link:\n${link}\n\nEl link vence en 1 hora. Si no lo pediste, ignorá este email.`;
+  const texto = `Hola ${nombre}, recibimos un pedido para cambiar la contraseña de tu cuenta de Bipeo.\n\nElegí una contraseña nueva entrando a este link:\n${link}\n\nEl link vence en 1 hora. Si no lo pediste, ignorá este email.`;
   return enviar({ para, asunto, html, texto });
 }
 

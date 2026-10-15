@@ -111,8 +111,8 @@ export default function SuscripcionPage() {
             {vencida && (
               <p className="suscripcion-card__texto">
                 {esAdmin
-                  ? 'Para seguir usando Escaner, renová la suscripción. Apenas se acredite el pago, vuelve todo a la normalidad.'
-                  : 'Para seguir usando Escaner, el administrador del comercio tiene que renovar la suscripción.'}
+                  ? 'Para seguir usando Bipeo, renová la suscripción. Apenas se acredite el pago, vuelve todo a la normalidad.'
+                  : 'Para seguir usando Bipeo, el administrador del comercio tiene que renovar la suscripción.'}
               </p>
             )}
 

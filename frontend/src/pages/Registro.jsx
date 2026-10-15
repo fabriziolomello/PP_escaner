@@ -78,7 +78,7 @@ export default function Registro() {
           {registrado.email_enviado ? (
             <p className="login-card__texto">
               Te mandamos un email a <strong>{registrado.email}</strong> con un link para confirmar tu cuenta.
-              Tocalo para empezar a usar Escaner. Si no lo ves, revisá la carpeta de spam.
+              Tocalo para empezar a usar Bipeo. Si no lo ves, revisá la carpeta de spam.
             </p>
           ) : (
             <p className="login-card__texto">

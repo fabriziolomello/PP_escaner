@@ -1,4 +1,4 @@
--- Esquema de base de datos del proyecto Escaner
+-- Esquema de base de datos del proyecto Bipeo
 -- Ejecutar una vez contra la base de datos vacia (ej: mysql -u root -p escaner < src/db/schema.sql)
 
 CREATE TABLE IF NOT EXISTS comercios (

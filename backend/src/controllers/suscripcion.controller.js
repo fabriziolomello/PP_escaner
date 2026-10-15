@@ -165,7 +165,7 @@ async function pagar(req, res) {
         items: [
           {
             id: 'suscripcion-mensual',
-            title: 'Suscripción mensual Escaner',
+            title: 'Suscripción mensual Bipeo',
             quantity: 1,
             unit_price: precioMensual(),
             currency_id: 'ARS',
