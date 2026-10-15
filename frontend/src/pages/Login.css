@@ -132,3 +132,50 @@
 .login-card__link:hover {
   text-decoration: underline;
 }
+
+/* Compartidos con las pantallas de cuenta que no tienen sesión
+   (confirmar email, recuperar y restablecer contraseña) y con Registro. */
+.login-card__ok {
+  width: 100%;
+  margin: 0 0 16px;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  background-color: var(--color-accent-bg);
+  color: var(--color-accent);
+  font-size: 13px;
+  text-align: left;
+}
+
+.login-card__texto {
+  margin: 0 0 16px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--color-text-secondary);
+}
+
+.login-card__texto strong {
+  color: var(--color-text);
+}
+
+.login-form__olvide {
+  align-self: flex-end;
+  margin-top: -6px;
+  font-size: 13px;
+  color: var(--color-accent);
+  text-decoration: none;
+}
+
+.login-card__boton-link {
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--color-accent);
+  font-size: inherit;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.login-card__boton-link:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

@@ -11,6 +11,7 @@ import {
   SwapIcon,
   CashIcon,
   CardIcon,
+  LockIcon,
 } from './icons'
 import './NavBar.css'
 
@@ -122,6 +123,14 @@ export default function NavBar() {
               >
                 <CardIcon />
                 Suscripción
+              </Link>
+              <Link
+                className={`navbar-link${esActiva('/cuenta') ? ' navbar-link--active' : ''}`}
+                to="/cuenta"
+                onClick={cerrar}
+              >
+                <LockIcon />
+                Mi cuenta
               </Link>
             </>
           )}

@@ -16,6 +16,10 @@ import VentasPage from './pages/VentasPage'
 import MovimientoStockPage from './pages/MovimientoStockPage'
 import CajaPage from './pages/CajaPage'
 import SuscripcionPage from './pages/SuscripcionPage'
+import MiCuentaPage from './pages/MiCuentaPage'
+import VerificarEmailPage from './pages/VerificarEmailPage'
+import RecuperarPasswordPage from './pages/RecuperarPasswordPage'
+import RestablecerPasswordPage from './pages/RestablecerPasswordPage'
 import ProtectedRoute from './routes/ProtectedRoute'
 
 function App() {
@@ -32,6 +36,9 @@ function App() {
         />
         <Route path="/login" element={<Login />} />
         <Route path="/registro" element={<Registro />} />
+        <Route path="/verificar-email" element={<VerificarEmailPage />} />
+        <Route path="/recuperar-password" element={<RecuperarPasswordPage />} />
+        <Route path="/restablecer-password" element={<RestablecerPasswordPage />} />
 
         <Route
           path="/escanear"
@@ -86,6 +93,14 @@ function App() {
           element={
             <ProtectedRoute permitirVencida>
               <SuscripcionPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/cuenta"
+          element={
+            <ProtectedRoute rolesPermitidos={['admin']}>
+              <MiCuentaPage />
             </ProtectedRoute>
           }
         />

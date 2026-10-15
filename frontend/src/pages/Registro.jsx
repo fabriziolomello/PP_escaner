@@ -1,8 +1,8 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { registrarComercio } from '../api/auth'
-import { useAuth } from '../context/AuthContext'
+import { Link } from 'react-router-dom'
+import { registrarComercio, reenviarVerificacion } from '../api/auth'
 import PageHeader from '../components/PageHeader'
+import './Login.css'
 import './Registro.css'
 
 export default function Registro() {
@@ -13,9 +13,10 @@ export default function Registro() {
   const [confirmPassword, setConfirmPassword] = useState('')
   const [error, setError] = useState('')
   const [cargando, setCargando] = useState(false)
-
-  const { login } = useAuth()
-  const navigate = useNavigate()
+  // Registro hecho: no se inicia sesión hasta confirmar el email.
+  const [registrado, setRegistrado] = useState(null)
+  const [reenviando, setReenviando] = useState(false)
+  const [reenviado, setReenviado] = useState(false)
 
   async function handleSubmit(event) {
     event.preventDefault()
@@ -28,19 +29,78 @@ export default function Registro() {
 
     setCargando(true)
     try {
-      const { token, usuario } = await registrarComercio({
+      const resultado = await registrarComercio({
         nombreComercio,
         nombreAdmin,
         email,
         password,
       })
-      login(token, usuario)
-      navigate('/')
+      setRegistrado(resultado)
     } catch (err) {
       setError(err.message)
     } finally {
       setCargando(false)
     }
+  }
+
+  async function handleReenviar() {
+    setError('')
+    setReenviando(true)
+    try {
+      await reenviarVerificacion(registrado.email)
+      setReenviado(true)
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setReenviando(false)
+    }
+  }
+
+  if (registrado) {
+    return (
+      <div className="login-page">
+        <p className="login-page__eyebrow">Registro de comercio</p>
+        <div className="login-card">
+          <h1 className="login-card__title">¡Gracias por registrarte!</h1>
+          <p className="login-card__subtitle">Falta un paso: confirmar tu email</p>
+
+          {error && (
+            <p className="login-card__error" role="alert">
+              {error}
+            </p>
+          )}
+          {reenviado && (
+            <p className="login-card__ok" role="status">
+              Te mandamos el email de nuevo.
+            </p>
+          )}
+
+          {registrado.email_enviado ? (
+            <p className="login-card__texto">
+              Te mandamos un email a <strong>{registrado.email}</strong> con un link para confirmar tu cuenta.
+              Tocalo para empezar a usar Escaner. Si no lo ves, revisá la carpeta de spam.
+            </p>
+          ) : (
+            <p className="login-card__texto">
+              Creamos tu cuenta, pero no pudimos mandar el email a <strong>{registrado.email}</strong>. Probá
+              reenviarlo en unos minutos.
+            </p>
+          )}
+
+          <p className="login-card__footer">
+            ¿No te llegó?{' '}
+            <button className="login-card__boton-link" onClick={handleReenviar} disabled={reenviando}>
+              {reenviando ? 'Reenviando...' : 'Reenviar email'}
+            </button>
+          </p>
+          <p className="login-card__footer">
+            <Link className="login-card__link" to="/login">
+              Volver al login
+            </Link>
+          </p>
+        </div>
+      </div>
+    )
   }
 
   return (

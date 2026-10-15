@@ -1,0 +1,106 @@
+.mi-cuenta-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  /* Sin eyebrow arriba de la tarjeta, así que necesita más padding-top
+     para no chocar con el botón hamburguesa fijo del NavBar. */
+  padding: 72px 20px 24px;
+  background-color: var(--color-bg);
+}
+
+.mi-cuenta-card {
+  width: 100%;
+  max-width: 360px;
+  background-color: var(--color-surface);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+}
+
+.mi-cuenta-card__datos {
+  padding-bottom: 16px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.mi-cuenta-card__nombre {
+  margin: 0 0 4px;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.mi-cuenta-card__email {
+  margin: 0;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  overflow-wrap: anywhere;
+}
+
+.mi-cuenta-card__error,
+.mi-cuenta-card__ok {
+  margin: 0 0 16px;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+}
+
+.mi-cuenta-card__error {
+  background-color: rgba(242, 106, 106, 0.12);
+  color: var(--color-danger);
+}
+
+.mi-cuenta-card__ok {
+  background-color: var(--color-accent-bg);
+  color: var(--color-accent);
+}
+
+.mi-cuenta-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.mi-cuenta-form__field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  text-align: left;
+}
+
+.mi-cuenta-form__label {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+.mi-cuenta-form__input {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  background-color: var(--color-surface-alt);
+  color: var(--color-text);
+  font-size: 14px;
+}
+
+.mi-cuenta-form__input:focus {
+  outline: none;
+  border-color: var(--color-accent);
+}
+
+.mi-cuenta-form__submit {
+  margin-top: 8px;
+  width: 100%;
+  padding: 13px 14px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background-color: #ffffff;
+  color: var(--color-button-text-on-white);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.mi-cuenta-form__submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
