@@ -20,20 +20,28 @@ import MiCuentaPage from './pages/MiCuentaPage'
 import VerificarEmailPage from './pages/VerificarEmailPage'
 import RecuperarPasswordPage from './pages/RecuperarPasswordPage'
 import RestablecerPasswordPage from './pages/RestablecerPasswordPage'
+import LandingPage from './pages/LandingPage'
 import ProtectedRoute from './routes/ProtectedRoute'
+import { useAuth } from './context/AuthContext'
+
+// "/" es la landing para quien no inició sesión y el Inicio del sistema para quien sí.
+function Inicio() {
+  const { usuario } = useAuth()
+  if (!usuario) {
+    return <LandingPage />
+  }
+  return (
+    <ProtectedRoute>
+      <Dashboard />
+    </ProtectedRoute>
+  )
+}
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route
-          path="/"
-          element={
-            <ProtectedRoute>
-              <Dashboard />
-            </ProtectedRoute>
-          }
-        />
+        <Route path="/" element={<Inicio />} />
         <Route path="/login" element={<Login />} />
         <Route path="/registro" element={<Registro />} />
         <Route path="/verificar-email" element={<VerificarEmailPage />} />

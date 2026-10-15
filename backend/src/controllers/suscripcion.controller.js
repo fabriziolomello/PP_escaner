@@ -1,4 +1,5 @@
 const pool = require('../config/db');
+const { LIMITE_PRODUCTOS, LIMITE_EMPLEADOS } = require('../config/plan');
 
 // Reglas de la suscripcion mensual:
 // - al registrarse, el comercio tiene DIAS_PRUEBA de prueba gratis;
@@ -231,8 +232,20 @@ async function webhook(req, res) {
   }
 }
 
+// Publica (sin login): la landing muestra el plan con los mismos valores que
+// se cobran y se controlan.
+function plan(req, res) {
+  res.json({
+    precio: precioMensual(),
+    dias_prueba: DIAS_PRUEBA,
+    limite_productos: LIMITE_PRODUCTOS,
+    limite_empleados: LIMITE_EMPLEADOS,
+  });
+}
+
 module.exports = {
   DIAS_PRUEBA,
+  plan,
   obtenerEstado,
   obtener,
   pagar,
