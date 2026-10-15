@@ -1,6 +1,7 @@
 const pool = require('../config/db');
 const { parse } = require('csv-parse/sync');
 const cloudinary = require('../config/cloudinary');
+const { LIMITE_PRODUCTOS, MENSAJE_LIMITE_PRODUCTOS, contarProductosActivos } = require('../config/plan');
 
 const COLUMNAS = 'id, codigo_barras, nombre, precio, foto_url, stock, activo, comercio_id';
 
@@ -44,9 +45,13 @@ async function crear(req, res) {
   try {
     await connection.beginTransaction();
 
-    // Bloquea la fila del comercio para que dos altas simultaneas con el
-    // mismo codigo no pasen las dos el control de repetidos.
+    // Bloquea la fila del comercio para que dos altas simultaneas no pasen
+    // las dos el control de repetidos ni el del limite del plan.
     await connection.query('SELECT id FROM comercios WHERE id = ? FOR UPDATE', [comercio_id]);
+    if ((await contarProductosActivos(connection, comercio_id)) >= LIMITE_PRODUCTOS) {
+      await connection.rollback();
+      return res.status(409).json({ error: MENSAJE_LIMITE_PRODUCTOS });
+    }
     const ocupado = await codigoOcupado(connection, comercio_id, codigo_barras);
     if (ocupado) {
       await connection.rollback();
@@ -195,20 +200,39 @@ async function cambiarActivo(req, res) {
     return res.status(400).json({ error: 'Falta indicar si el producto queda activo' });
   }
 
+  const connection = await pool.getConnection();
   try {
-    const [result] = await pool.query('UPDATE productos SET activo = ? WHERE id = ? AND comercio_id = ?', [
-      activo,
+    await connection.beginTransaction();
+
+    // Reactivar vuelve a ocupar un lugar del plan (mismo bloqueo que en crear).
+    await connection.query('SELECT id FROM comercios WHERE id = ? FOR UPDATE', [comercio_id]);
+    const [actual] = await connection.query('SELECT activo FROM productos WHERE id = ? AND comercio_id = ?', [
       id,
       comercio_id,
     ]);
-    if (result.affectedRows === 0) {
+    if (actual.length === 0) {
+      await connection.rollback();
       return res.status(404).json({ error: 'Producto no encontrado' });
     }
-    const [rows] = await pool.query(`SELECT ${COLUMNAS} FROM productos WHERE id = ?`, [id]);
+    if (
+      activo &&
+      !actual[0].activo &&
+      (await contarProductosActivos(connection, comercio_id)) >= LIMITE_PRODUCTOS
+    ) {
+      await connection.rollback();
+      return res.status(409).json({ error: MENSAJE_LIMITE_PRODUCTOS });
+    }
+
+    await connection.query('UPDATE productos SET activo = ? WHERE id = ?', [activo, id]);
+    const [rows] = await connection.query(`SELECT ${COLUMNAS} FROM productos WHERE id = ?`, [id]);
+    await connection.commit();
     res.json(aProducto(rows[0]));
   } catch (err) {
+    await connection.rollback();
     console.error(err);
     res.status(500).json({ error: 'Error al actualizar el producto' });
+  } finally {
+    connection.release();
   }
 }
 
@@ -278,6 +302,16 @@ async function cargarCsv(req, res) {
 
   const resumen = { creados: 0, actualizados: 0, errores: [] };
 
+  // Los codigos que ya existen se actualizan igual; solo las altas nuevas
+  // cuentan para el limite del plan.
+  let lugaresLibres;
+  try {
+    lugaresLibres = LIMITE_PRODUCTOS - (await contarProductosActivos(pool, comercio_id));
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: 'Error al cargar el archivo' });
+  }
+
   for (let i = 0; i < filas.length; i++) {
     const fila = filas[i];
     const numeroFila = i + 2; // +2: encabezado + indice base 1
@@ -308,6 +342,8 @@ async function cargarCsv(req, res) {
           existente[0].id,
         ]);
         resumen.actualizados++;
+      } else if (lugaresLibres <= 0) {
+        resumen.errores.push({ fila: numeroFila, motivo: `Límite de ${LIMITE_PRODUCTOS} productos alcanzado` });
       } else {
         await pool.query(
           `INSERT INTO productos (codigo_barras, nombre, precio, comercio_id)
@@ -315,6 +351,7 @@ async function cargarCsv(req, res) {
           [codigo_barras, nombre, precio, comercio_id]
         );
         resumen.creados++;
+        lugaresLibres--;
       }
     } catch (err) {
       console.error(err);
