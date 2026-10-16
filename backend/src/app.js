@@ -33,7 +33,7 @@ app.use('/api/ventas', conSuscripcion, ventasRoutes);
 app.use('/api/stock', conSuscripcion, stockRoutes);
 app.use('/api/caja', conSuscripcion, cajaRoutes);
 
-// Build del frontend (ver "npm run build:frontend"), servido desde el mismo
+// Build del frontend (ver "npm run compilar-frontend"), servido desde el mismo
 // backend para no depender de un dominio separado.
 const publicPath = path.join(__dirname, '../public');
 app.use(express.static(publicPath));

@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "node --watch src/server.js",
     "start": "node src/server.js",
-    "build:frontend": "npm --prefix ../frontend run build && rm -rf public && cp -r ../frontend/dist public"
+    "compilar-frontend": "npm --prefix ../frontend run build && rm -rf public && cp -r ../frontend/dist public"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",
