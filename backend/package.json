@@ -7,6 +7,7 @@
   "scripts": {
     "dev": "node --watch src/server.js",
     "start": "node src/server.js",
+    "build:frontend": "echo El frontend ya va compilado en public. Para regenerarlo: npm run compilar-frontend",
     "compilar-frontend": "npm --prefix ../frontend run build && rm -rf public && cp -r ../frontend/dist public"
   },
   "dependencies": {
