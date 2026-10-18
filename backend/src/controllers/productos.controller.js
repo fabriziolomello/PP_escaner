@@ -14,6 +14,7 @@ function aProducto(fila) {
 // el mensaje de error, o null si el codigo esta libre. excluirId: el producto
 // que se esta editando.
 async function codigoOcupado(db, comercio_id, codigo_barras, excluirId = null) {
+  if (!codigo_barras) return null;
   const [rows] = await db.query(
     `SELECT id, nombre, activo FROM productos
      WHERE comercio_id = ? AND codigo_barras = ? AND id <> ?
@@ -28,11 +29,12 @@ async function codigoOcupado(db, comercio_id, codigo_barras, excluirId = null) {
 }
 
 async function crear(req, res) {
-  const codigo_barras = req.body.codigo_barras?.trim();
+  // El codigo de barras es opcional (hay productos sin codigo): vacio -> NULL.
+  const codigo_barras = req.body.codigo_barras?.trim() || null;
   const { nombre, precio } = req.body;
   const comercio_id = req.user.comercio_id;
 
-  if (!codigo_barras || !nombre || precio === undefined || precio === null || precio === '') {
+  if (!nombre || precio === undefined || precio === null || precio === '') {
     return res.status(400).json({ error: 'Faltan datos obligatorios' });
   }
 
@@ -143,11 +145,11 @@ async function obtenerPorId(req, res) {
 async function actualizar(req, res) {
   const comercio_id = req.user.comercio_id;
   const { id } = req.params;
-  const codigo_barras = req.body.codigo_barras?.trim();
+  const codigo_barras = req.body.codigo_barras?.trim() || null;
   const nombre = req.body.nombre?.trim();
   const { precio } = req.body;
 
-  if (!codigo_barras || !nombre || precio === undefined || precio === null || precio === '') {
+  if (!nombre || precio === undefined || precio === null || precio === '') {
     return res.status(400).json({ error: 'Faltan datos obligatorios' });
   }
 
@@ -315,12 +317,12 @@ async function cargarCsv(req, res) {
   for (let i = 0; i < filas.length; i++) {
     const fila = filas[i];
     const numeroFila = i + 2; // +2: encabezado + indice base 1
-    const codigo_barras = fila.codigo_barras?.trim();
+    const codigo_barras = fila.codigo_barras?.trim() || null;
     const nombre = fila.nombre?.trim();
     const precio = parsearPrecio(fila.precio);
 
-    if (!codigo_barras || !nombre) {
-      resumen.errores.push({ fila: numeroFila, motivo: 'Falta codigo_barras o nombre' });
+    if (!nombre) {
+      resumen.errores.push({ fila: numeroFila, motivo: 'Falta el nombre' });
       continue;
     }
     if (!Number.isFinite(precio) || precio < 0) {
@@ -329,11 +331,19 @@ async function cargarCsv(req, res) {
     }
 
     try {
-      const [existente] = await pool.query(
-        `SELECT id FROM productos WHERE comercio_id = ? AND codigo_barras = ?
-         ORDER BY id LIMIT 1`,
-        [comercio_id, codigo_barras]
-      );
+      // Sin codigo, el producto se reconoce por el nombre (entre los que
+      // tampoco tienen codigo), asi reimportar el archivo no lo duplica.
+      const [existente] = codigo_barras
+        ? await pool.query(
+            `SELECT id FROM productos WHERE comercio_id = ? AND codigo_barras = ?
+             ORDER BY id LIMIT 1`,
+            [comercio_id, codigo_barras]
+          )
+        : await pool.query(
+            `SELECT id FROM productos WHERE comercio_id = ? AND codigo_barras IS NULL AND nombre = ?
+             ORDER BY id LIMIT 1`,
+            [comercio_id, nombre]
+          );
 
       if (existente.length > 0) {
         await pool.query('UPDATE productos SET nombre = ?, precio = ? WHERE id = ?', [

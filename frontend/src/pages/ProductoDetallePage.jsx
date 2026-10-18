@@ -125,10 +125,12 @@ export default function ProductoDetallePage() {
               {enCarrito > 0 && ` · ${enCarrito} en el carrito`}
             </p>
 
-            <div className="detalle-card__codigo">
-              <ScanIcon />
-              {producto.codigo_barras}
-            </div>
+            {producto.codigo_barras && (
+              <div className="detalle-card__codigo">
+                <ScanIcon />
+                {producto.codigo_barras}
+              </div>
+            )}
 
             {/* No se puede agregar mas de lo que hay en stock (ver ventas.controller.js). */}
             {producto.activo && (

@@ -30,7 +30,7 @@ export default function ProductoNuevoPage() {
     if (!editando) return
     obtenerPorId(id)
       .then((producto) => {
-        setCodigoBarras(producto.codigo_barras)
+        setCodigoBarras(producto.codigo_barras ?? '')
         setNombre(producto.nombre)
         setPrecio(String(producto.precio))
         setFotoPreview(producto.foto_url || '')
@@ -111,13 +111,12 @@ export default function ProductoNuevoPage() {
         {!cargandoProducto && (
           <form className="producto-nuevo-form" onSubmit={handleSubmit}>
             <div className="producto-nuevo-form__field">
-              <span className="producto-nuevo-form__label">Código de barras</span>
+              <span className="producto-nuevo-form__label">Código de barras (opcional)</span>
               <div className="producto-nuevo-form__codigo-row">
                 <input
                   className="producto-nuevo-form__input"
                   value={codigoBarras}
                   onChange={(event) => setCodigoBarras(event.target.value)}
-                  required
                 />
                 <button
                   type="button"

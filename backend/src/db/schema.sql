@@ -26,7 +26,8 @@ CREATE TABLE IF NOT EXISTS usuarios (
 
 CREATE TABLE IF NOT EXISTS productos (
   id INT AUTO_INCREMENT PRIMARY KEY,
-  codigo_barras VARCHAR(100) NOT NULL,
+  -- Opcional: hay productos sin codigo (se buscan por nombre).
+  codigo_barras VARCHAR(100),
   nombre VARCHAR(200) NOT NULL,
   precio NUMERIC(12, 2) NOT NULL,
   foto_url TEXT,
