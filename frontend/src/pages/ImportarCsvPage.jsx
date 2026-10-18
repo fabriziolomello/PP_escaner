@@ -99,6 +99,7 @@ export default function ImportarCsvPage() {
           <div className="csv-resumen">
             <p className="csv-resumen__item">Creados: {resumen.creados}</p>
             <p className="csv-resumen__item">Actualizados: {resumen.actualizados}</p>
+            {resumen.sinCambios > 0 && <p className="csv-resumen__item">Sin cambios: {resumen.sinCambios}</p>}
 
             {resumen.errores.length > 0 && (
               <>

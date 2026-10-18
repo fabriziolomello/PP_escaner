@@ -386,7 +386,7 @@ async function cargarCsv(req, res) {
     });
   }
 
-  const resumen = { creados: 0, actualizados: 0, errores: [] };
+  const resumen = { creados: 0, actualizados: 0, sinCambios: 0, errores: [] };
 
   // Los codigos que ya existen se actualizan igual; solo las altas nuevas
   // cuentan para el limite del plan.
@@ -437,27 +437,34 @@ async function cargarCsv(req, res) {
         // FOR UPDATE: que una venta en paralelo no cambie el stock en el medio.
         const [existente] = codigo_barras
           ? await connection.query(
-              `SELECT id, stock FROM productos WHERE comercio_id = ? AND codigo_barras = ?
+              `SELECT id, nombre, precio, stock FROM productos WHERE comercio_id = ? AND codigo_barras = ?
                ORDER BY id LIMIT 1 FOR UPDATE`,
               [comercio_id, codigo_barras]
             )
           : await connection.query(
-              `SELECT id, stock FROM productos WHERE comercio_id = ? AND codigo_barras IS NULL AND nombre = ?
+              `SELECT id, nombre, precio, stock FROM productos WHERE comercio_id = ? AND codigo_barras IS NULL AND nombre = ?
                ORDER BY id LIMIT 1 FOR UPDATE`,
               [comercio_id, nombre]
             );
 
         let productoId;
         let stockAnterior;
+        let cambioDatos = false;
         const esNuevo = existente.length === 0;
         if (existente.length > 0) {
           productoId = existente[0].id;
           stockAnterior = existente[0].stock;
-          await connection.query('UPDATE productos SET nombre = ?, precio = ? WHERE id = ?', [
-            nombre,
-            precio,
-            productoId,
-          ]);
+          // El precio se guarda con 2 decimales: se compara en centavos.
+          cambioDatos =
+            existente[0].nombre !== nombre ||
+            Math.round(Number(existente[0].precio) * 100) !== Math.round(precio * 100);
+          if (cambioDatos) {
+            await connection.query('UPDATE productos SET nombre = ?, precio = ? WHERE id = ?', [
+              nombre,
+              precio,
+              productoId,
+            ]);
+          }
         } else if (lugaresLibres <= 0) {
           await connection.rollback();
           resumen.errores.push({ fila: numeroFila, motivo: `Límite de ${LIMITE_PRODUCTOS} productos alcanzado` });
@@ -486,8 +493,10 @@ async function cargarCsv(req, res) {
         if (esNuevo) {
           resumen.creados++;
           lugaresLibres--;
-        } else {
+        } else if (cambioDatos || diferencia !== 0) {
           resumen.actualizados++;
+        } else {
+          resumen.sinCambios++;
         }
       } catch (err) {
         await connection.rollback();
