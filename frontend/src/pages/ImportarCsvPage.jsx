@@ -4,6 +4,25 @@ import { UploadIcon } from '../components/icons'
 import { cargarCsv } from '../api/productos'
 import './ImportarCsvPage.css'
 
+// Con ';' y coma decimal, como lo guarda Excel en español; el BOM hace que
+// Excel lea bien los acentos. El backend acepta tambien ',' y punto decimal.
+const CSV_EJEMPLO = [
+  'codigo_barras;nombre;precio',
+  '7790895000997;Coca-Cola 500 ml;1500,00',
+  '7790040113408;Galletitas Oreo 118 g;1250,50',
+  ';Pan casero (por kg);2800',
+].join('\r\n')
+
+function descargarEjemplo() {
+  const blob = new Blob(['\uFEFF' + CSV_EJEMPLO], { type: 'text/csv;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = 'ejemplo-productos.csv'
+  link.click()
+  URL.revokeObjectURL(url)
+}
+
 export default function ImportarCsvPage() {
   const [archivo, setArchivo] = useState(null)
   const [resumen, setResumen] = useState(null)
@@ -51,8 +70,13 @@ export default function ImportarCsvPage() {
             required
           />
 
+          <button type="button" className="csv-ejemplo" onClick={descargarEjemplo}>
+            Descargar archivo de ejemplo
+          </button>
+
           <p className="csv-nota">
             Si el código de barras ya existe, se actualiza el producto. Si no existe, se crea uno nuevo.
+            El código de barras es opcional: podés dejarlo vacío.
           </p>
 
           {error && (

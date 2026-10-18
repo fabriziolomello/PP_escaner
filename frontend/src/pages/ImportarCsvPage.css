@@ -47,6 +47,19 @@
   color: var(--color-text-secondary);
 }
 
+.csv-ejemplo {
+  display: block;
+  margin: 12px auto 0;
+  padding: 4px;
+  border: none;
+  background: none;
+  color: var(--color-text);
+  font-size: 13px;
+  font-weight: 500;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
 .csv-input-oculto {
   display: none;
 }
