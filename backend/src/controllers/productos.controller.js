@@ -270,8 +270,13 @@ function parsearPrecio(valor) {
 // Upsert por codigo_barras: si el codigo ya existe se actualiza ese producto
 // (aunque este desactivado); si no, se crea. Se toma el primero que coincida
 // porque bases viejas pueden tener duplicados de antes del control de repetidos.
+// La columna stock es opcional y es el stock actual (no una cantidad a sumar),
+// asi subir dos veces el mismo archivo deja todo igual. La diferencia con el
+// stock que habia queda registrada como movimiento, como un ajuste manual.
+const MOTIVO_STOCK_CSV = 'Carga masiva CSV';
+
 async function cargarCsv(req, res) {
-  const comercio_id = req.user.comercio_id;
+  const { comercio_id, user_id } = req.user;
 
   if (!req.file) {
     return res.status(400).json({ error: 'No se recibio ningun archivo' });
@@ -298,7 +303,7 @@ async function cargarCsv(req, res) {
   );
   if (columnasFaltantes.length > 0) {
     return res.status(400).json({
-      error: `Al archivo le faltan las columnas: ${columnasFaltantes.join(', ')}. La primera fila tiene que ser codigo_barras,nombre,precio`,
+      error: `Al archivo le faltan las columnas: ${columnasFaltantes.join(', ')}. La primera fila tiene que ser codigo_barras,nombre,precio (y opcionalmente stock)`,
     });
   }
 
@@ -314,59 +319,99 @@ async function cargarCsv(req, res) {
     return res.status(500).json({ error: 'Error al cargar el archivo' });
   }
 
-  for (let i = 0; i < filas.length; i++) {
-    const fila = filas[i];
-    const numeroFila = i + 2; // +2: encabezado + indice base 1
-    const codigo_barras = fila.codigo_barras?.trim() || null;
-    const nombre = fila.nombre?.trim();
-    const precio = parsearPrecio(fila.precio);
+  const connection = await pool.getConnection();
+  try {
+    for (let i = 0; i < filas.length; i++) {
+      const fila = filas[i];
+      const numeroFila = i + 2; // +2: encabezado + indice base 1
+      const codigo_barras = fila.codigo_barras?.trim() || null;
+      const nombre = fila.nombre?.trim();
+      const precio = parsearPrecio(fila.precio);
+      // Celda vacia o sin columna: el stock no se toca.
+      const textoStock = fila.stock?.trim() ?? '';
+      const stock = textoStock === '' ? null : Number(textoStock);
 
-    if (!nombre) {
-      resumen.errores.push({ fila: numeroFila, motivo: 'Falta el nombre' });
-      continue;
-    }
-    if (!Number.isFinite(precio) || precio < 0) {
-      resumen.errores.push({ fila: numeroFila, motivo: 'Precio invalido' });
-      continue;
-    }
-
-    try {
-      // Sin codigo, el producto se reconoce por el nombre (entre los que
-      // tampoco tienen codigo), asi reimportar el archivo no lo duplica.
-      const [existente] = codigo_barras
-        ? await pool.query(
-            `SELECT id FROM productos WHERE comercio_id = ? AND codigo_barras = ?
-             ORDER BY id LIMIT 1`,
-            [comercio_id, codigo_barras]
-          )
-        : await pool.query(
-            `SELECT id FROM productos WHERE comercio_id = ? AND codigo_barras IS NULL AND nombre = ?
-             ORDER BY id LIMIT 1`,
-            [comercio_id, nombre]
-          );
-
-      if (existente.length > 0) {
-        await pool.query('UPDATE productos SET nombre = ?, precio = ? WHERE id = ?', [
-          nombre,
-          precio,
-          existente[0].id,
-        ]);
-        resumen.actualizados++;
-      } else if (lugaresLibres <= 0) {
-        resumen.errores.push({ fila: numeroFila, motivo: `Límite de ${LIMITE_PRODUCTOS} productos alcanzado` });
-      } else {
-        await pool.query(
-          `INSERT INTO productos (codigo_barras, nombre, precio, comercio_id)
-           VALUES (?, ?, ?, ?)`,
-          [codigo_barras, nombre, precio, comercio_id]
-        );
-        resumen.creados++;
-        lugaresLibres--;
+      if (!nombre) {
+        resumen.errores.push({ fila: numeroFila, motivo: 'Falta el nombre' });
+        continue;
       }
-    } catch (err) {
-      console.error(err);
-      resumen.errores.push({ fila: numeroFila, motivo: 'Error al guardar en la base de datos' });
+      if (!Number.isFinite(precio) || precio < 0) {
+        resumen.errores.push({ fila: numeroFila, motivo: 'Precio invalido' });
+        continue;
+      }
+      if (stock !== null && (!Number.isInteger(stock) || stock < 0)) {
+        resumen.errores.push({ fila: numeroFila, motivo: 'Stock invalido: tiene que ser un numero entero, 0 o mayor' });
+        continue;
+      }
+
+      try {
+        await connection.beginTransaction();
+
+        // Sin codigo, el producto se reconoce por el nombre (entre los que
+        // tampoco tienen codigo), asi reimportar el archivo no lo duplica.
+        // FOR UPDATE: que una venta en paralelo no cambie el stock en el medio.
+        const [existente] = codigo_barras
+          ? await connection.query(
+              `SELECT id, stock FROM productos WHERE comercio_id = ? AND codigo_barras = ?
+               ORDER BY id LIMIT 1 FOR UPDATE`,
+              [comercio_id, codigo_barras]
+            )
+          : await connection.query(
+              `SELECT id, stock FROM productos WHERE comercio_id = ? AND codigo_barras IS NULL AND nombre = ?
+               ORDER BY id LIMIT 1 FOR UPDATE`,
+              [comercio_id, nombre]
+            );
+
+        let productoId;
+        let stockAnterior;
+        const esNuevo = existente.length === 0;
+        if (existente.length > 0) {
+          productoId = existente[0].id;
+          stockAnterior = existente[0].stock;
+          await connection.query('UPDATE productos SET nombre = ?, precio = ? WHERE id = ?', [
+            nombre,
+            precio,
+            productoId,
+          ]);
+        } else if (lugaresLibres <= 0) {
+          await connection.rollback();
+          resumen.errores.push({ fila: numeroFila, motivo: `Límite de ${LIMITE_PRODUCTOS} productos alcanzado` });
+          continue;
+        } else {
+          const [result] = await connection.query(
+            `INSERT INTO productos (codigo_barras, nombre, precio, comercio_id)
+             VALUES (?, ?, ?, ?)`,
+            [codigo_barras, nombre, precio, comercio_id]
+          );
+          productoId = result.insertId;
+          stockAnterior = 0;
+        }
+
+        const diferencia = stock === null ? 0 : stock - stockAnterior;
+        if (diferencia !== 0) {
+          await connection.query('UPDATE productos SET stock = ? WHERE id = ?', [stock, productoId]);
+          await connection.query(
+            `INSERT INTO movimientos_stock (producto_id, tipo, cantidad, motivo, usuario_id)
+             VALUES (?, ?, ?, ?, ?)`,
+            [productoId, diferencia > 0 ? 'entrada' : 'salida', Math.abs(diferencia), MOTIVO_STOCK_CSV, user_id]
+          );
+        }
+
+        await connection.commit();
+        if (esNuevo) {
+          resumen.creados++;
+          lugaresLibres--;
+        } else {
+          resumen.actualizados++;
+        }
+      } catch (err) {
+        await connection.rollback();
+        console.error(err);
+        resumen.errores.push({ fila: numeroFila, motivo: 'Error al guardar en la base de datos' });
+      }
     }
+  } finally {
+    connection.release();
   }
 
   res.json(resumen);

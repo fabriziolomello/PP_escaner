@@ -7,10 +7,10 @@ import './ImportarCsvPage.css'
 // Con ';' y coma decimal, como lo guarda Excel en español; el BOM hace que
 // Excel lea bien los acentos. El backend acepta tambien ',' y punto decimal.
 const CSV_EJEMPLO = [
-  'codigo_barras;nombre;precio',
-  '7790895000997;Coca-Cola 500 ml;1500,00',
-  '7790040113408;Galletitas Oreo 118 g;1250,50',
-  ';Pan casero (por kg);2800',
+  'codigo_barras;nombre;precio;stock',
+  '7790895000997;Coca-Cola 500 ml;1500,00;24',
+  '7790040113408;Galletitas Oreo 118 g;1250,50;10',
+  ';Pan casero (por kg);2800;',
 ].join('\r\n')
 
 function descargarEjemplo() {
@@ -40,6 +40,9 @@ export default function ImportarCsvPage() {
     try {
       const data = await cargarCsv(archivo)
       setResumen(data)
+      // Ya procesado: se limpia para no volver a subirlo por error.
+      setArchivo(null)
+      if (inputRef.current) inputRef.current.value = ''
     } catch (err) {
       setError(err.message)
     } finally {
@@ -58,7 +61,7 @@ export default function ImportarCsvPage() {
           <button type="button" className="csv-dropzone" onClick={() => inputRef.current?.click()}>
             <UploadIcon />
             <span className="csv-dropzone__titulo">{archivo ? archivo.name : 'Seleccionar archivo'}</span>
-            <span className="csv-dropzone__hint">codigo_barras,nombre,precio</span>
+            <span className="csv-dropzone__hint">codigo_barras,nombre,precio,stock</span>
           </button>
 
           <input
@@ -66,7 +69,10 @@ export default function ImportarCsvPage() {
             className="csv-input-oculto"
             type="file"
             accept=".csv"
-            onChange={(event) => setArchivo(event.target.files[0] ?? null)}
+            onChange={(event) => {
+              setArchivo(event.target.files[0] ?? null)
+              setResumen(null)
+            }}
             required
           />
 
@@ -76,7 +82,8 @@ export default function ImportarCsvPage() {
 
           <p className="csv-nota">
             Si el código de barras ya existe, se actualiza el producto. Si no existe, se crea uno nuevo.
-            El código de barras es opcional: podés dejarlo vacío.
+            El código de barras y el stock son opcionales: podés dejarlos vacíos. El stock es la cantidad que
+            tenés ahora (no se suma a la anterior); si lo dejás vacío, no se modifica.
           </p>
 
           {error && (
