@@ -390,8 +390,15 @@ async function subirFoto(req, res) {
     }
 
     const dataUri = `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`;
+    // Se achica antes de guardar (máx. 800px, JPG con calidad automática) y se
+    // sobrescribe la foto anterior del producto para no acumular archivos.
     const subida = await cloudinary.uploader.upload(dataUri, {
       folder: `escaner/comercio_${comercio_id}`,
+      public_id: `producto_${id}`,
+      overwrite: true,
+      invalidate: true,
+      format: 'jpg',
+      transformation: [{ width: 800, height: 800, crop: 'limit', quality: 'auto' }],
     });
 
     await pool.query('UPDATE productos SET foto_url = ? WHERE id = ?', [subida.secure_url, id]);
