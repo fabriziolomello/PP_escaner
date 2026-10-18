@@ -60,11 +60,14 @@
   flex-direction: column;
   overflow-y: auto;
   transform: translateX(calc(100% + 24px));
-  transition: transform 0.2s ease;
+  visibility: hidden;
+  transition: transform 0.2s ease, visibility 0s linear 0.2s;
 }
 
 .carrito-panel--open {
   transform: translateX(0);
+  visibility: visible;
+  transition: transform 0.2s ease;
 }
 
 .carrito-panel__header {

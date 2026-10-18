@@ -31,6 +31,10 @@ html,
 body {
   margin: 0;
   padding: 0;
+  /* Nada debería desbordar a lo ancho; si algo lo hace, que no deje
+     correr la página de costado en el celular. */
+  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 body {
@@ -47,4 +51,14 @@ body {
 button,
 input {
   font-family: inherit;
+}
+
+/* iOS hace zoom al enfocar un campo con letra de menos de 16px, y en una
+   SPA ese zoom queda puesto al navegar a otra pantalla. */
+@media (pointer: coarse) {
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
 }
