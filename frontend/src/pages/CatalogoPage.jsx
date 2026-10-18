@@ -4,7 +4,7 @@ import PageHeader from '../components/PageHeader'
 import ProductoListItem from '../components/ProductoListItem'
 import { SearchIcon, PlusIcon, UploadIcon, DownloadIcon } from '../components/icons'
 import { listar } from '../api/productos'
-import { armarCsvProductos, descargarCsv } from '../utils/csv'
+import { descargarExcelProductos } from '../utils/excel'
 import './CatalogoPage.css'
 
 export default function CatalogoPage() {
@@ -33,14 +33,14 @@ export default function CatalogoPage() {
   }, [busqueda, verDesactivados])
 
   // Exporta todos los activos (sin importar la búsqueda), en el formato que
-  // acepta Cargar CSV: se edita y se vuelve a subir.
+  // acepta Importar: se edita y se vuelve a subir.
   async function exportarCatalogo() {
     setError('')
     setExportando(true)
     try {
       const activos = await listar()
       const fecha = new Date().toLocaleDateString('sv') // AAAA-MM-DD
-      descargarCsv(`catalogo-${fecha}.csv`, armarCsvProductos(activos))
+      await descargarExcelProductos(`catalogo-${fecha}.xlsx`, activos)
     } catch (err) {
       setError(err.message)
     } finally {
@@ -72,7 +72,7 @@ export default function CatalogoPage() {
           </Link>
           <Link className="catalogo-accion" to="/productos/importar">
             <UploadIcon />
-            Cargar CSV
+            Importar
           </Link>
           <button
             type="button"

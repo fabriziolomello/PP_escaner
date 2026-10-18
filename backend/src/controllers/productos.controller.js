@@ -1,5 +1,6 @@
 const pool = require('../config/db');
 const { parse } = require('csv-parse/sync');
+const ExcelJS = require('exceljs');
 const cloudinary = require('../config/cloudinary');
 const { LIMITE_PRODUCTOS, MENSAJE_LIMITE_PRODUCTOS, contarProductosActivos } = require('../config/plan');
 
@@ -249,11 +250,13 @@ function leerTextoCsv(buffer) {
   }
 }
 
+// Tambien tab: es lo que guarda Excel con "Texto (delimitado por tabulaciones)".
 function detectarSeparador(texto) {
   const encabezado = texto.split(/\r?\n/, 1)[0];
-  const puntoYComa = encabezado.split(';').length;
-  const comas = encabezado.split(',').length;
-  return puntoYComa > comas ? ';' : ',';
+  const candidatos = [',', ';', '\t'];
+  return candidatos.reduce((mejor, separador) =>
+    encabezado.split(separador).length > encabezado.split(mejor).length ? separador : mejor
+  );
 }
 
 // Acepta "1234.5", "1234,50", "1.234,50", "$ 1.234,50". Si hay coma, la
@@ -267,8 +270,8 @@ function parsearPrecio(valor) {
   return Number(texto);
 }
 
-// El export del catalogo escribe los codigos como ="123" para que Excel no
-// los convierta en numero; si el archivo se sube sin pasar por Excel llegan asi.
+// Los CSV que exportaba antes el catalogo traian los codigos como ="123" para
+// que Excel no los convirtiera en numero; si se suben sin pasar por Excel llegan asi.
 function limpiarCodigo(valor) {
   const texto = String(valor ?? '').trim();
   const comoTexto = texto.match(/^="(.*)"$/);
@@ -288,36 +291,98 @@ function esNotacionCientifica(codigo) {
 // stock que habia queda registrada como movimiento, como un ajuste manual.
 const MOTIVO_STOCK_CSV = 'Carga masiva CSV';
 
+// Encabezados sin importar mayusculas/espacios ("Codigo_Barras ").
+function normalizarEncabezado(columna) {
+  return String(columna ?? '').trim().toLowerCase();
+}
+
+// Los dos lectores devuelven { columnas, filas }. Cada fila es { numero, datos }:
+// numero es la fila real del archivo (para los mensajes de error) y datos tiene
+// todos los valores como texto.
+function leerFilasCsv(buffer) {
+  const texto = leerTextoCsv(buffer);
+  const registros = parse(texto, {
+    bom: true,
+    delimiter: detectarSeparador(texto),
+    columns: (encabezados) => encabezados.map(normalizarEncabezado),
+    skip_empty_lines: true,
+    trim: true,
+    relax_column_count: true,
+    relax_quotes: true, // para los ="123" (ver limpiarCodigo)
+    info: true,
+  });
+  return {
+    columnas: registros.length > 0 ? Object.keys(registros[0].record) : null,
+    filas: registros.map(({ record, info }) => ({ numero: info.lines, datos: record })),
+  };
+}
+
+// Una celda de Excel puede ser numero, texto, formula ({ result }), link
+// ({ text }) o texto con formato ({ richText }).
+function textoDeCelda(valor) {
+  if (valor === null || valor === undefined) return '';
+  if (typeof valor !== 'object' || valor instanceof Date) return String(valor).trim();
+  if (valor.richText) return valor.richText.map((parte) => parte.text).join('').trim();
+  if ('result' in valor) return textoDeCelda(valor.result);
+  if ('text' in valor) return textoDeCelda(valor.text);
+  return '';
+}
+
+// Primera hoja; la fila 1 son los encabezados.
+async function leerFilasExcel(buffer) {
+  const libro = new ExcelJS.Workbook();
+  await libro.xlsx.load(buffer);
+  const hoja = libro.worksheets[0];
+  if (!hoja) return { columnas: null, filas: [] };
+
+  const encabezados = [];
+  hoja.getRow(1).eachCell((celda, columna) => {
+    encabezados[columna] = normalizarEncabezado(textoDeCelda(celda.value));
+  });
+
+  const filas = [];
+  hoja.eachRow((row, numero) => {
+    if (numero === 1) return;
+    const datos = {};
+    encabezados.forEach((encabezado, columna) => {
+      if (encabezado) datos[encabezado] = textoDeCelda(row.getCell(columna).value);
+    });
+    if (Object.values(datos).some((valor) => valor !== '')) filas.push({ numero, datos });
+  });
+  return { columnas: encabezados.filter(Boolean), filas };
+}
+
+const esXlsx = (buffer) => buffer.subarray(0, 4).equals(Buffer.from('PK\x03\x04', 'latin1')); // un .xlsx es un zip
+const esXlsViejo = (buffer) => buffer.subarray(0, 4).equals(Buffer.from([0xd0, 0xcf, 0x11, 0xe0]));
+
 async function cargarCsv(req, res) {
   const { comercio_id, user_id } = req.user;
 
   if (!req.file) {
     return res.status(400).json({ error: 'No se recibio ningun archivo' });
   }
+  if (esXlsViejo(req.file.buffer)) {
+    return res.status(400).json({
+      error: 'Ese archivo es de un Excel viejo (.xls). Abrilo y guardalo como "Libro de Excel (.xlsx)"',
+    });
+  }
 
+  let columnas;
   let filas;
   try {
-    const texto = leerTextoCsv(req.file.buffer);
-    filas = parse(texto, {
-      bom: true,
-      delimiter: detectarSeparador(texto),
-      // Encabezados sin importar mayusculas/espacios ("Codigo_Barras ").
-      columns: (encabezados) => encabezados.map((columna) => columna.trim().toLowerCase()),
-      skip_empty_lines: true,
-      trim: true,
-      relax_column_count: true,
-      relax_quotes: true, // para los ="123" (ver limpiarCodigo)
-    });
+    ({ columnas, filas } = esXlsx(req.file.buffer)
+      ? await leerFilasExcel(req.file.buffer)
+      : leerFilasCsv(req.file.buffer));
   } catch (err) {
-    return res.status(400).json({ error: 'No se pudo leer el archivo CSV' });
+    return res.status(400).json({ error: 'No se pudo leer el archivo' });
   }
 
   const columnasFaltantes = ['codigo_barras', 'nombre', 'precio'].filter(
-    (columna) => filas.length > 0 && !(columna in filas[0])
+    (columna) => columnas && !columnas.includes(columna)
   );
   if (columnasFaltantes.length > 0) {
     return res.status(400).json({
-      error: `Al archivo le faltan las columnas: ${columnasFaltantes.join(', ')}. La primera fila tiene que ser codigo_barras,nombre,precio (y opcionalmente stock)`,
+      error: `Al archivo le faltan las columnas: ${columnasFaltantes.join(', ')}. La primera fila tiene que tener codigo_barras, nombre, precio (y opcionalmente stock)`,
     });
   }
 
@@ -336,8 +401,7 @@ async function cargarCsv(req, res) {
   const connection = await pool.getConnection();
   try {
     for (let i = 0; i < filas.length; i++) {
-      const fila = filas[i];
-      const numeroFila = i + 2; // +2: encabezado + indice base 1
+      const { numero: numeroFila, datos: fila } = filas[i];
       const codigo_barras = limpiarCodigo(fila.codigo_barras);
       const nombre = fila.nombre?.trim();
       const precio = parsearPrecio(fila.precio);

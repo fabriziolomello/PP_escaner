@@ -2,7 +2,7 @@ import { useRef, useState } from 'react'
 import PageHeader from '../components/PageHeader'
 import { UploadIcon } from '../components/icons'
 import { cargarCsv } from '../api/productos'
-import { armarCsvProductos, descargarCsv } from '../utils/csv'
+import { descargarExcelProductos } from '../utils/excel'
 import './ImportarCsvPage.css'
 
 const PRODUCTOS_EJEMPLO = [
@@ -10,10 +10,6 @@ const PRODUCTOS_EJEMPLO = [
   { codigo_barras: '7790040113408', nombre: 'Galletitas Oreo 118 g', precio: 1250.5, stock: 10 },
   { codigo_barras: null, nombre: 'Pan casero (por kg)', precio: 2800, stock: null },
 ]
-
-function descargarEjemplo() {
-  descargarCsv('ejemplo-productos.csv', armarCsvProductos(PRODUCTOS_EJEMPLO))
-}
 
 export default function ImportarCsvPage() {
   const [archivo, setArchivo] = useState(null)
@@ -42,25 +38,34 @@ export default function ImportarCsvPage() {
     }
   }
 
+  async function descargarEjemplo() {
+    setError('')
+    try {
+      await descargarExcelProductos('ejemplo-productos.xlsx', PRODUCTOS_EJEMPLO)
+    } catch (err) {
+      setError(err.message)
+    }
+  }
+
   return (
     <div className="csv-page">
-      <p className="csv-page__eyebrow">Carga masiva CSV</p>
+      <p className="csv-page__eyebrow">Carga masiva</p>
 
       <div className="csv-card">
-        <PageHeader title="Cargar CSV" backTo="/catalogo" />
+        <PageHeader title="Importar productos" backTo="/catalogo" />
 
         <form onSubmit={handleSubmit}>
           <button type="button" className="csv-dropzone" onClick={() => inputRef.current?.click()}>
             <UploadIcon />
             <span className="csv-dropzone__titulo">{archivo ? archivo.name : 'Seleccionar archivo'}</span>
-            <span className="csv-dropzone__hint">codigo_barras,nombre,precio,stock</span>
+            <span className="csv-dropzone__hint">Excel (.xlsx) o CSV</span>
           </button>
 
           <input
             ref={inputRef}
             className="csv-input-oculto"
             type="file"
-            accept=".csv"
+            accept=".xlsx,.csv"
             onChange={(event) => {
               setArchivo(event.target.files[0] ?? null)
               setResumen(null)
