@@ -20,7 +20,7 @@ export default function ProductoListItem({ producto, mostrarCodigo = false, most
           <span
             className={`producto-list-item__stock${producto.stock <= 0 ? ' producto-list-item__stock--agotado' : ''}`}
           >
-            Stock: {producto.stock}
+            {producto.stock > 0 ? `Stock: ${producto.stock}` : 'Sin stock'}
           </span>
         )}
       </span>

@@ -72,7 +72,7 @@ export default function BuscarProductoPage() {
 
         <div className="buscar-card__lista">
           {productos.map((producto) => (
-            <ProductoListItem key={producto.id} producto={producto} />
+            <ProductoListItem key={producto.id} producto={producto} mostrarStock />
           ))}
         </div>
       </div>

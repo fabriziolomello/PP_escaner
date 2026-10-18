@@ -59,7 +59,7 @@ export default function ResultadosPage() {
 
         <div className="resultados-card__lista">
           {productos.map((producto) => (
-            <ProductoListItem key={producto.id} producto={producto} />
+            <ProductoListItem key={producto.id} producto={producto} mostrarStock />
           ))}
         </div>
 
