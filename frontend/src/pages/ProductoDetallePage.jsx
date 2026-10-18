@@ -5,6 +5,7 @@ import { ImagePlaceholderIcon, ScanIcon, UploadIcon, CartIcon } from '../compone
 import { obtenerPorId, subirFoto, cambiarActivo } from '../api/productos'
 import { useAuth } from '../context/AuthContext'
 import { useCarrito } from '../context/CarritoContext'
+import { formatearPrecio } from '../utils/formato'
 import './ProductoDetallePage.css'
 
 const FOTO_TAMANO_MAXIMO = 5 * 1024 * 1024
@@ -118,7 +119,7 @@ export default function ProductoDetallePage() {
             </div>
 
             <h2 className="detalle-card__nombre">{producto.nombre}</h2>
-            <p className="detalle-card__precio">${producto.precio}</p>
+            <p className="detalle-card__precio">{formatearPrecio(producto.precio)}</p>
 
             <p className={`detalle-card__stock${producto.stock <= 0 ? ' detalle-card__stock--agotado' : ''}`}>
               Stock: {producto.stock}

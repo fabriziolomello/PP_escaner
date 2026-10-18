@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { ImagePlaceholderIcon, ChevronRightIcon } from './icons'
+import { formatearPrecio } from '../utils/formato'
 import './ProductoListItem.css'
 
 export default function ProductoListItem({ producto, mostrarCodigo = false, mostrarStock = false }) {
@@ -12,7 +13,7 @@ export default function ProductoListItem({ producto, mostrarCodigo = false, most
       <span className="producto-list-item__info">
         <span className="producto-list-item__nombre">{producto.nombre}</span>
         <span className="producto-list-item__precio">
-          ${producto.precio}
+          {formatearPrecio(producto.precio)}
           {mostrarCodigo && producto.codigo_barras && ` · ${producto.codigo_barras.slice(0, 6)}...`}
         </span>
         {mostrarStock && (

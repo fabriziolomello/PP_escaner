@@ -11,10 +11,16 @@ export function etiquetaMetodoPago(valor) {
 }
 
 // Los DECIMAL llegan del backend como string ("1500.00"); los totales
-// calculados en el cliente son number. Ambos se muestran igual.
+// calculados en el cliente son number. Ambos se muestran igual, en formato
+// argentino: punto para los miles y coma para los decimales ($1.500,00).
+const FORMATO_PESOS = new Intl.NumberFormat('es-AR', {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+})
+
 export function formatearPrecio(valor) {
   const numero = Number(valor)
-  return `${numero < 0 ? '-' : ''}$${Math.abs(numero).toFixed(2)}`
+  return `${numero < 0 ? '-' : ''}$${FORMATO_PESOS.format(Math.abs(numero))}`
 }
 
 export function formatearFecha(fecha) {
