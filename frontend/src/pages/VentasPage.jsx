@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import PageHeader from '../components/PageHeader'
 import { ChevronRightIcon } from '../components/icons'
+import TicketAcciones from '../components/TicketAcciones'
 import { useAuth } from '../context/AuthContext'
 import { listar, anular } from '../api/ventas'
 import { METODOS_PAGO, etiquetaMetodoPago, formatearPrecio, formatearFechaHora } from '../utils/formato'
@@ -221,6 +222,8 @@ export default function VentasPage() {
                       </p>
                     ))}
                     <p className="venta-item__vendedor">Vendió: {venta.usuario_nombre}</p>
+
+                    {!venta.anulada && <TicketAcciones venta={venta} />}
 
                     {esAdmin && !venta.anulada && venta.caja_estado !== 'cerrada' && (
                       <button

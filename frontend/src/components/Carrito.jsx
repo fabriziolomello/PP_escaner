@@ -4,6 +4,7 @@ import { useCarrito } from '../context/CarritoContext'
 import { crear } from '../api/ventas'
 import { abrir as abrirCaja } from '../api/caja'
 import { METODOS_PAGO, formatearPrecio } from '../utils/formato'
+import TicketAcciones from './TicketAcciones'
 import { CartIcon, CloseIcon, MinusIcon, PlusIcon, ImagePlaceholderIcon } from './icons'
 import './Carrito.css'
 
@@ -92,6 +93,7 @@ export default function Carrito() {
           <div className="carrito-exito" role="status">
             <p className="carrito-exito__titulo">Venta registrada</p>
             <p className="carrito-exito__total">{formatearPrecio(ventaRegistrada.total)}</p>
+            <TicketAcciones venta={ventaRegistrada} />
             <Link className="carrito-exito__link" to="/ventas" onClick={cerrar}>
               Ver historial de ventas
             </Link>

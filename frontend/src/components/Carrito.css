@@ -280,6 +280,8 @@
 }
 
 .carrito-exito__link {
+  display: inline-block;
+  margin-top: 16px;
   color: var(--color-accent);
   font-size: 13px;
   font-weight: 600;

@@ -130,6 +130,7 @@ async function crear(req, res) {
 
     res.status(201).json({
       id: ventaId,
+      creado_en: new Date(),
       total,
       metodo_pago,
       anulada: false,
