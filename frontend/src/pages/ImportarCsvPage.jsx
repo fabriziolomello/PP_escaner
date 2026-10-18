@@ -2,25 +2,17 @@ import { useRef, useState } from 'react'
 import PageHeader from '../components/PageHeader'
 import { UploadIcon } from '../components/icons'
 import { cargarCsv } from '../api/productos'
+import { armarCsvProductos, descargarCsv } from '../utils/csv'
 import './ImportarCsvPage.css'
 
-// Con ';' y coma decimal, como lo guarda Excel en español; el BOM hace que
-// Excel lea bien los acentos. El backend acepta tambien ',' y punto decimal.
-const CSV_EJEMPLO = [
-  'codigo_barras;nombre;precio;stock',
-  '7790895000997;Coca-Cola 500 ml;1500,00;24',
-  '7790040113408;Galletitas Oreo 118 g;1250,50;10',
-  ';Pan casero (por kg);2800;',
-].join('\r\n')
+const PRODUCTOS_EJEMPLO = [
+  { codigo_barras: '7790895000997', nombre: 'Coca-Cola 500 ml', precio: 1500, stock: 24 },
+  { codigo_barras: '7790040113408', nombre: 'Galletitas Oreo 118 g', precio: 1250.5, stock: 10 },
+  { codigo_barras: null, nombre: 'Pan casero (por kg)', precio: 2800, stock: null },
+]
 
 function descargarEjemplo() {
-  const blob = new Blob(['\uFEFF' + CSV_EJEMPLO], { type: 'text/csv;charset=utf-8' })
-  const url = URL.createObjectURL(blob)
-  const link = document.createElement('a')
-  link.href = url
-  link.download = 'ejemplo-productos.csv'
-  link.click()
-  URL.revokeObjectURL(url)
+  descargarCsv('ejemplo-productos.csv', armarCsvProductos(PRODUCTOS_EJEMPLO))
 }
 
 export default function ImportarCsvPage() {
@@ -83,7 +75,8 @@ export default function ImportarCsvPage() {
           <p className="csv-nota">
             Si el código de barras ya existe, se actualiza el producto. Si no existe, se crea uno nuevo.
             El código de barras y el stock son opcionales: podés dejarlos vacíos. El stock es la cantidad que
-            tenés ahora (no se suma a la anterior); si lo dejás vacío, no se modifica.
+            tenés ahora (no se suma a la anterior); si lo dejás vacío, no se modifica. Para actualizar
+            lo que ya tenés, usá Exportar catálogo, cambiá los números y subilo de nuevo.
           </p>
 
           {error && (

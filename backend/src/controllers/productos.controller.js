@@ -267,6 +267,19 @@ function parsearPrecio(valor) {
   return Number(texto);
 }
 
+// El export del catalogo escribe los codigos como ="123" para que Excel no
+// los convierta en numero; si el archivo se sube sin pasar por Excel llegan asi.
+function limpiarCodigo(valor) {
+  const texto = String(valor ?? '').trim();
+  const comoTexto = texto.match(/^="(.*)"$/);
+  return (comoTexto ? comoTexto[1].replace(/""/g, '"').trim() : texto) || null;
+}
+
+// "7,79E+12": Excel paso el codigo a notacion cientifica y perdio digitos.
+function esNotacionCientifica(codigo) {
+  return /^\d+([.,]\d+)?E\+?\d+$/i.test(codigo);
+}
+
 // Upsert por codigo_barras: si el codigo ya existe se actualiza ese producto
 // (aunque este desactivado); si no, se crea. Se toma el primero que coincida
 // porque bases viejas pueden tener duplicados de antes del control de repetidos.
@@ -293,6 +306,7 @@ async function cargarCsv(req, res) {
       skip_empty_lines: true,
       trim: true,
       relax_column_count: true,
+      relax_quotes: true, // para los ="123" (ver limpiarCodigo)
     });
   } catch (err) {
     return res.status(400).json({ error: 'No se pudo leer el archivo CSV' });
@@ -324,7 +338,7 @@ async function cargarCsv(req, res) {
     for (let i = 0; i < filas.length; i++) {
       const fila = filas[i];
       const numeroFila = i + 2; // +2: encabezado + indice base 1
-      const codigo_barras = fila.codigo_barras?.trim() || null;
+      const codigo_barras = limpiarCodigo(fila.codigo_barras);
       const nombre = fila.nombre?.trim();
       const precio = parsearPrecio(fila.precio);
       // Celda vacia o sin columna: el stock no se toca.
@@ -333,6 +347,13 @@ async function cargarCsv(req, res) {
 
       if (!nombre) {
         resumen.errores.push({ fila: numeroFila, motivo: 'Falta el nombre' });
+        continue;
+      }
+      if (codigo_barras && esNotacionCientifica(codigo_barras)) {
+        resumen.errores.push({
+          fila: numeroFila,
+          motivo: `Código de barras ilegible (${codigo_barras}): Excel lo pasó a notación científica. Poné la columna en formato Texto y volvé a escribir el código`,
+        });
         continue;
       }
       if (!Number.isFinite(precio) || precio < 0) {

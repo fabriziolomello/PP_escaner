@@ -2,8 +2,9 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import PageHeader from '../components/PageHeader'
 import ProductoListItem from '../components/ProductoListItem'
-import { SearchIcon, PlusIcon, UploadIcon } from '../components/icons'
+import { SearchIcon, PlusIcon, UploadIcon, DownloadIcon } from '../components/icons'
 import { listar } from '../api/productos'
+import { armarCsvProductos, descargarCsv } from '../utils/csv'
 import './CatalogoPage.css'
 
 export default function CatalogoPage() {
@@ -14,6 +15,7 @@ export default function CatalogoPage() {
   const [productos, setProductos] = useState([])
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState('')
+  const [exportando, setExportando] = useState(false)
 
   useEffect(() => {
     const nombreBuscado = busqueda.trim()
@@ -29,6 +31,22 @@ export default function CatalogoPage() {
 
     return () => clearTimeout(timeoutId)
   }, [busqueda, verDesactivados])
+
+  // Exporta todos los activos (sin importar la búsqueda), en el formato que
+  // acepta Cargar CSV: se edita y se vuelve a subir.
+  async function exportarCatalogo() {
+    setError('')
+    setExportando(true)
+    try {
+      const activos = await listar()
+      const fecha = new Date().toLocaleDateString('sv') // AAAA-MM-DD
+      descargarCsv(`catalogo-${fecha}.csv`, armarCsvProductos(activos))
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setExportando(false)
+    }
+  }
 
   return (
     <div className="catalogo-page">
@@ -56,6 +74,15 @@ export default function CatalogoPage() {
             <UploadIcon />
             Cargar CSV
           </Link>
+          <button
+            type="button"
+            className="catalogo-accion catalogo-accion--ancha"
+            onClick={exportarCatalogo}
+            disabled={exportando}
+          >
+            <DownloadIcon />
+            {exportando ? 'Exportando...' : 'Exportar catálogo'}
+          </button>
         </div>
 
         <label className="catalogo-desactivados">
