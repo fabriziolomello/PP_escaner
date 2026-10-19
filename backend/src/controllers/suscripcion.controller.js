@@ -172,6 +172,8 @@ async function pagar(req, res) {
           },
         ],
         external_reference: `${PREFIJO_REFERENCIA}${req.user.comercio_id}`,
+        // Lo que aparece en el resumen de la tarjeta (si el banco lo respeta).
+        statement_descriptor: 'BIPEO',
         back_urls: { success: urlVuelta, pending: urlVuelta, failure: urlVuelta },
         ...(esPublica && {
           auto_return: 'approved',
