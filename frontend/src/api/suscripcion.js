@@ -12,7 +12,7 @@ export function pagar() {
 }
 
 // Al volver del checkout: acredita el pago sin esperar al webhook.
-// Devuelve el estado nuevo + pago: 'approved' | 'pending' | 'rejected' | ...
+// Devuelve el estado nuevo + pago: 'approved' | 'pending' | 'rejected' | 'monto_invalido' | ...
 export function confirmar(paymentId) {
   return apiFetch('/suscripcion/confirmar', {
     method: 'POST',

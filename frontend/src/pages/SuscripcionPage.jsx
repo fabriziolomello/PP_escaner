@@ -25,6 +25,12 @@ function mensajePago(estadoPago) {
       texto: 'El pago quedó pendiente. Se acredita solo apenas MercadoPago lo confirme.',
     }
   }
+  if (estadoPago === 'monto_invalido') {
+    return {
+      tipo: 'error',
+      texto: 'Recibimos el pago, pero el monto no coincide con el precio del plan. Contactanos para resolverlo.',
+    }
+  }
   return { tipo: 'error', texto: 'El pago no se completó. Podés intentar de nuevo.' }
 }
 

@@ -88,6 +88,15 @@ async function procesarPago(paymentId) {
     return { estado: pago.status, comercio_id: comercioId };
   }
 
+  // El monto lo arma nuestra preferencia, pero se verifica igual: un pago en
+  // otra moneda o por menos del precio no suma el mes.
+  if (pago.currency_id !== 'ARS' || Number(pago.transaction_amount) < precioMensual()) {
+    console.error(
+      `Pago ${pago.id} del comercio ${comercioId} no acreditado: ${pago.transaction_amount} ${pago.currency_id} (precio ${precioMensual()} ARS)`
+    );
+    return { estado: 'monto_invalido', comercio_id: comercioId };
+  }
+
   const connection = await pool.getConnection();
   try {
     await connection.beginTransaction();
