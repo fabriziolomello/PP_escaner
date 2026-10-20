@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import './LegalPage.css'
 
@@ -19,6 +20,12 @@ function Email() {
 }
 
 function LegalLayout({ titulo, children }) {
+  // Se llega desde el pie de la landing (o de otra página legal) y el router
+  // conserva el scroll: sin esto el texto se abriría por el final.
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [titulo])
+
   return (
     <div className="legal">
       <header className="legal-nav">
@@ -146,7 +153,9 @@ export function TerminosPage() {
       <h2>5. Arrepentimiento</h2>
       <p>
         Podés revocar la contratación dentro de los 10 días corridos desde que pagaste por primera vez, sin
-        necesidad de dar explicaciones, y te devolvemos lo pagado por el mismo medio. Para hacerlo usá el{' '}
+        necesidad de dar explicaciones, y te devolvemos lo pagado por el mismo medio. Los pagos de los meses
+        siguientes son renovaciones del mismo servicio y no dan lugar a un nuevo arrepentimiento: para dejar de
+        usarlo, ver el punto 6. Para revocar la contratación usá el{' '}
         <Link to="/arrepentimiento">botón de arrepentimiento</Link>.
       </p>
 
@@ -375,6 +384,10 @@ export function ArrepentimientoPage() {
       <p>
         Podés revocar la contratación de Bipeo dentro de los <strong>10 días corridos</strong> desde tu primer pago,
         sin dar explicaciones y sin ningún costo. Te devolvemos el total pagado por el mismo medio de pago.
+      </p>
+      <p>
+        Los pagos de los meses siguientes son renovaciones del mismo servicio y no están alcanzados. Si ya no
+        querés seguir, alcanza con no renovar: ver <Link to="/baja">Dar de baja</Link>.
       </p>
       <p>
         Para hacerlo, tocá el botón y mandanos el email (con los datos ya completos) desde el email de tu cuenta, o
