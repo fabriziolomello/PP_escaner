@@ -3,7 +3,9 @@ const pool = require('../config/db');
 
 // Valida el JWT y agrega req.user = { user_id, rol, comercio_id }.
 // Ademas consulta que el usuario siga activo: si el admin desactiva a un
-// empleado, su sesion abierta deja de funcionar en el proximo pedido.
+// empleado, su sesion abierta deja de funcionar en el proximo pedido. Lo
+// mismo si cambio la contraseña: el token trae la version_sesion con la que
+// se emitio (los tokens viejos, sin "v", cuentan como version 0).
 async function auth(req, res, next) {
   // Ya validado: app.js lo aplica antes de las rutas y las rutas lo repiten.
   if (req.user) {
@@ -26,9 +28,14 @@ async function auth(req, res, next) {
   }
 
   try {
-    const [rows] = await pool.query('SELECT activo FROM usuarios WHERE id = ?', [payload.user_id]);
+    const [rows] = await pool.query('SELECT activo, version_sesion FROM usuarios WHERE id = ?', [
+      payload.user_id,
+    ]);
     if (rows.length === 0 || !rows[0].activo) {
       return res.status(401).json({ error: 'Tu usuario fue desactivado' });
+    }
+    if ((payload.v ?? 0) !== rows[0].version_sesion) {
+      return res.status(401).json({ error: 'La contraseña cambió, volvé a ingresar' });
     }
     req.user = payload;
     next();

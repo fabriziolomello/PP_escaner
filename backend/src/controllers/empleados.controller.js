@@ -138,7 +138,7 @@ async function cambiarActivo(req, res) {
 }
 
 // El admin le asigna una contraseña nueva (la actual no se puede ver: se
-// guarda encriptada).
+// guarda encriptada). Las sesiones abiertas del empleado se cierran.
 async function cambiarPassword(req, res) {
   const comercio_id = req.user.comercio_id;
   const { id } = req.params;
@@ -151,7 +151,8 @@ async function cambiarPassword(req, res) {
   try {
     const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
     const [result] = await pool.query(
-      `UPDATE usuarios SET password_hash = ? WHERE id = ? AND comercio_id = ? AND rol = 'empleado'`,
+      `UPDATE usuarios SET password_hash = ?, version_sesion = version_sesion + 1
+       WHERE id = ? AND comercio_id = ? AND rol = 'empleado'`,
       [passwordHash, id, comercio_id]
     );
     if (result.affectedRows === 0) {

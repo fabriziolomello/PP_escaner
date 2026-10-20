@@ -666,6 +666,10 @@
   justify-content: space-between;
 }
 
+.landing-footer__legal {
+  width: 100%;
+}
+
 .landing-footer strong {
   color: var(--color-text);
 }

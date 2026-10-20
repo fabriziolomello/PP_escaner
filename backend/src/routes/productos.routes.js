@@ -5,7 +5,8 @@ const requireAdmin = require('../middleware/requireAdmin');
 const { crear, listar, obtenerPorId, actualizar, cambiarActivo, cargarCsv, subirFoto } = require('../controllers/productos.controller');
 
 const router = express.Router();
-const upload = multer({ storage: multer.memoryStorage() });
+// El CSV se lee entero en memoria: 2 MB sobran para el limite de productos.
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 2 * 1024 * 1024 } });
 
 const uploadFoto = multer({
   storage: multer.memoryStorage(),

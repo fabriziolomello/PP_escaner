@@ -20,6 +20,12 @@ CREATE TABLE IF NOT EXISTS usuarios (
   activo BOOLEAN NOT NULL DEFAULT true,
   -- Un admin recien registrado no entra hasta confirmar el email.
   email_verificado BOOLEAN NOT NULL DEFAULT false,
+  -- Sube al cambiar la contraseña: invalida los JWT anteriores (middleware/auth.js).
+  version_sesion INT NOT NULL DEFAULT 0,
+  -- Version de los Terminos/Privacidad que acepto al registrarse y cuando
+  -- (solo admins; NULL en cuentas de antes de que existieran).
+  terminos_version VARCHAR(20) NULL,
+  terminos_aceptados_en DATETIME NULL,
   creado_en TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (comercio_id) REFERENCES comercios(id)
 );

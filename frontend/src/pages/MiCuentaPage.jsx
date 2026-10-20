@@ -2,12 +2,13 @@ import { useState } from 'react'
 import PageHeader from '../components/PageHeader'
 import { cambiarPassword } from '../api/auth'
 import { useAuth } from '../context/AuthContext'
+import { LegalLinks } from './LegalPage'
 import './MiCuentaPage.css'
 
 // Solo admin: cambia su propia contraseña. Los empleados no pueden; se la
 // cambia el admin desde Empleados.
 export default function MiCuentaPage() {
-  const { usuario } = useAuth()
+  const { usuario, login } = useAuth()
   const [actual, setActual] = useState('')
   const [nueva, setNueva] = useState('')
   const [confirmNueva, setConfirmNueva] = useState('')
@@ -25,7 +26,10 @@ export default function MiCuentaPage() {
     }
     setGuardando(true)
     try {
-      await cambiarPassword(actual, nueva)
+      // Cambiar la contraseña cierra las demás sesiones; esta sigue con el
+      // token nuevo que devuelve el backend.
+      const { token } = await cambiarPassword(actual, nueva)
+      login(token, usuario)
       setActual('')
       setNueva('')
       setConfirmNueva('')
@@ -94,6 +98,8 @@ export default function MiCuentaPage() {
             {guardando ? 'Guardando...' : 'Cambiar contraseña'}
           </button>
         </form>
+
+        <LegalLinks className="mi-cuenta-card__legal" />
       </div>
     </div>
   )

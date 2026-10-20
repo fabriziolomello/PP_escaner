@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { obtenerPlan } from '../api/plan'
 import { BoxIcon, CartIcon, CashIcon, CheckIcon, PeopleIcon, PhoneIcon, ScanIcon } from '../components/icons'
+import { LegalLinks } from './LegalPage'
 import './LandingPage.css'
 
 // Valores por defecto mientras carga (o si falla) /suscripcion/plan; los
@@ -256,6 +257,7 @@ export default function LandingPage() {
             Bipeo es un producto de <strong>Pavía</strong>
           </span>
           <span>© {new Date().getFullYear()}</span>
+          <LegalLinks className="landing-footer__legal" />
         </div>
       </footer>
     </div>

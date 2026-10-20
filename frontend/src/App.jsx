@@ -21,6 +21,7 @@ import VerificarEmailPage from './pages/VerificarEmailPage'
 import RecuperarPasswordPage from './pages/RecuperarPasswordPage'
 import RestablecerPasswordPage from './pages/RestablecerPasswordPage'
 import LandingPage from './pages/LandingPage'
+import { ArrepentimientoPage, BajaPage, PrivacidadPage, TerminosPage } from './pages/LegalPage'
 import ProtectedRoute from './routes/ProtectedRoute'
 import { useAuth } from './context/AuthContext'
 
@@ -47,6 +48,10 @@ function App() {
         <Route path="/verificar-email" element={<VerificarEmailPage />} />
         <Route path="/recuperar-password" element={<RecuperarPasswordPage />} />
         <Route path="/restablecer-password" element={<RestablecerPasswordPage />} />
+        <Route path="/terminos" element={<TerminosPage />} />
+        <Route path="/privacidad" element={<PrivacidadPage />} />
+        <Route path="/arrepentimiento" element={<ArrepentimientoPage />} />
+        <Route path="/baja" element={<BajaPage />} />
 
         <Route
           path="/escanear"

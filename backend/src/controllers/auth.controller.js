@@ -7,6 +7,11 @@ const { DIAS_PRUEBA } = require('./suscripcion.controller');
 
 const SALT_ROUNDS = 10;
 
+// Fecha de la version vigente de los Terminos y la Privacidad (ver
+// frontend/src/pages/LegalPage.jsx). Se guarda en cada registro, junto con
+// cuando se aceptaron, como prueba de que version acepto cada comercio.
+const VERSION_TERMINOS = '2026-10-20';
+
 // Limite de intentos de login: con MAX_INTENTOS contraseñas incorrectas
 // seguidas, ese email queda bloqueado MINUTOS_BLOQUEO desde esa IP. Se cuenta
 // por email + IP para que alguien de afuera no pueda dejar sin acceso a un
@@ -136,9 +141,11 @@ function normalizarEmail(email) {
   return typeof email === 'string' ? email.trim().toLowerCase() : '';
 }
 
+// v = version_sesion: al cambiar la contraseña sube y este token deja de
+// valer (ver middleware/auth.js).
 function generarToken(usuario) {
   return jwt.sign(
-    { user_id: usuario.id, rol: usuario.rol, comercio_id: usuario.comercio_id },
+    { user_id: usuario.id, rol: usuario.rol, comercio_id: usuario.comercio_id, v: usuario.version_sesion },
     process.env.JWT_SECRET,
     { expiresIn: process.env.JWT_EXPIRES_IN || '8h' }
   );
@@ -152,6 +159,9 @@ async function registrarComercio(req, res) {
 
   if (!nombre_comercio || !nombre_admin || !email || !password) {
     return res.status(400).json({ error: 'Faltan datos obligatorios' });
+  }
+  if (req.body.acepta_terminos !== true) {
+    return res.status(400).json({ error: 'Tenés que aceptar los Términos y la Política de privacidad' });
   }
 
   const connection = await pool.getConnection();
@@ -168,9 +178,9 @@ async function registrarComercio(req, res) {
     const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
 
     const [usuarioResult] = await connection.query(
-      `INSERT INTO usuarios (nombre, email, password_hash, rol, comercio_id)
-       VALUES (?, ?, ?, 'admin', ?)`,
-      [nombre_admin, email, passwordHash, comercio.id]
+      `INSERT INTO usuarios (nombre, email, password_hash, rol, comercio_id, terminos_version, terminos_aceptados_en)
+       VALUES (?, ?, ?, 'admin', ?, ?, NOW())`,
+      [nombre_admin, email, passwordHash, comercio.id, VERSION_TERMINOS]
     );
     const usuario = {
       id: usuarioResult.insertId,
@@ -219,7 +229,7 @@ async function login(req, res) {
     const [rows] = await pool.query(
       `SELECT usuarios.id, usuarios.nombre, usuarios.email, usuarios.password_hash,
               usuarios.rol, usuarios.comercio_id, usuarios.activo, usuarios.email_verificado,
-              comercios.nombre AS comercio_nombre
+              usuarios.version_sesion, comercios.nombre AS comercio_nombre
        FROM usuarios
        JOIN comercios ON comercios.id = usuarios.comercio_id
        WHERE usuarios.email = ?`,
@@ -326,7 +336,7 @@ async function verificarEmail(req, res) {
     await connection.query('UPDATE usuarios SET email_verificado = true WHERE id = ?', [resultado.fila.usuario_id]);
     const [rows] = await connection.query(
       `SELECT usuarios.id, usuarios.nombre, usuarios.email, usuarios.rol, usuarios.comercio_id,
-              comercios.nombre AS comercio_nombre
+              usuarios.version_sesion, comercios.nombre AS comercio_nombre
        FROM usuarios
        JOIN comercios ON comercios.id = usuarios.comercio_id
        WHERE usuarios.id = ?`,
@@ -334,8 +344,8 @@ async function verificarEmail(req, res) {
     );
     await connection.commit();
 
-    const usuario = rows[0];
-    res.json({ token: generarToken(usuario), usuario });
+    const { version_sesion, ...usuario } = rows[0];
+    res.json({ token: generarToken({ ...usuario, version_sesion }), usuario });
   } catch (err) {
     await connection.rollback();
     console.error(err);
@@ -380,7 +390,8 @@ async function recuperarPassword(req, res) {
 }
 
 // Link del email de recuperacion: pone la contraseña nueva. De paso confirma
-// el email (si le llego el link, el email es suyo) y levanta el bloqueo de login.
+// el email (si le llego el link, el email es suyo), levanta el bloqueo de
+// login y cierra las sesiones abiertas (por si alguien mas tenia la contraseña).
 async function restablecerPassword(req, res) {
   const { token, password } = req.body;
   if (!token || !password) {
@@ -399,10 +410,11 @@ async function restablecerPassword(req, res) {
 
     const usuarioId = resultado.fila.usuario_id;
     const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
-    await connection.query('UPDATE usuarios SET password_hash = ?, email_verificado = true WHERE id = ?', [
-      passwordHash,
-      usuarioId,
-    ]);
+    await connection.query(
+      `UPDATE usuarios SET password_hash = ?, email_verificado = true, version_sesion = version_sesion + 1
+       WHERE id = ?`,
+      [passwordHash, usuarioId]
+    );
     // Invalida este link y cualquier otro de recuperacion pendiente.
     await connection.query(
       `UPDATE tokens_email SET usado_en = NOW()
@@ -424,6 +436,7 @@ async function restablecerPassword(req, res) {
 }
 
 // El admin cambia su propia contraseña (los empleados no: se la cambia el admin).
+// Cierra las demas sesiones abiertas y devuelve un token nuevo para esta.
 async function cambiarPassword(req, res) {
   const { actual, nueva } = req.body;
   if (!actual || !nueva) {
@@ -431,13 +444,24 @@ async function cambiarPassword(req, res) {
   }
 
   try {
-    const [rows] = await pool.query('SELECT password_hash FROM usuarios WHERE id = ?', [req.user.user_id]);
+    const [rows] = await pool.query('SELECT password_hash, version_sesion FROM usuarios WHERE id = ?', [
+      req.user.user_id,
+    ]);
     if (!(await bcrypt.compare(actual, rows[0].password_hash))) {
       return res.status(400).json({ error: 'La contraseña actual no es correcta' });
     }
     const passwordHash = await bcrypt.hash(nueva, SALT_ROUNDS);
-    await pool.query('UPDATE usuarios SET password_hash = ? WHERE id = ?', [passwordHash, req.user.user_id]);
-    res.json({ ok: true });
+    await pool.query('UPDATE usuarios SET password_hash = ?, version_sesion = version_sesion + 1 WHERE id = ?', [
+      passwordHash,
+      req.user.user_id,
+    ]);
+    const token = generarToken({
+      id: req.user.user_id,
+      rol: req.user.rol,
+      comercio_id: req.user.comercio_id,
+      version_sesion: rows[0].version_sesion + 1,
+    });
+    res.json({ ok: true, token });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error al cambiar la contraseña' });

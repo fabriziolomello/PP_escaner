@@ -85,3 +85,25 @@
   opacity: 0.6;
   cursor: not-allowed;
 }
+
+.registro-form__terminos {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--color-text-secondary);
+  text-align: left;
+}
+
+.registro-form__terminos input {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  margin: 1px 0 0;
+  accent-color: var(--color-accent);
+}
+
+.registro-form__terminos a {
+  color: var(--color-accent);
+}

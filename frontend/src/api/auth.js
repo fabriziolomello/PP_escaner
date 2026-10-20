@@ -11,7 +11,7 @@ export function login(email, password) {
 // Crea el comercio + su usuario admin en un solo paso. No inicia sesión:
 // devuelve { pendiente_verificacion, email, email_enviado } y el admin entra
 // recién después de tocar el link del email (ver verificarEmail).
-export function registrarComercio({ nombreComercio, nombreAdmin, email, password }) {
+export function registrarComercio({ nombreComercio, nombreAdmin, email, password, aceptaTerminos }) {
   return apiFetch('/auth/registro', {
     method: 'POST',
     body: JSON.stringify({
@@ -19,6 +19,7 @@ export function registrarComercio({ nombreComercio, nombreAdmin, email, password
       nombre_admin: nombreAdmin,
       email,
       password,
+      acepta_terminos: aceptaTerminos,
     }),
   })
 }

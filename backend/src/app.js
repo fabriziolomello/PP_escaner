@@ -1,6 +1,5 @@
 const path = require('path');
 const express = require('express');
-const cors = require('cors');
 const multer = require('multer');
 const authRoutes = require('./routes/auth.routes');
 const productosRoutes = require('./routes/productos.routes');
@@ -18,7 +17,42 @@ const app = express();
 // el limite de intentos de login) en vez de la del proxy.
 app.set('trust proxy', 1);
 
-app.use(cors());
+// Sin CORS: el frontend se sirve desde este mismo backend (mismo dominio), asi
+// que ningun otro sitio necesita llamar a la API desde el navegador.
+app.disable('x-powered-by');
+
+// Headers de seguridad. La CSP solo deja cargar codigo de este dominio (si se
+// colara un script inyectado, no corre), las fotos de Cloudinary y las fuentes
+// de Google; frame-ancestors impide que otro sitio meta la app en un iframe.
+// style-src lleva 'unsafe-inline' porque el lector de codigos de barras
+// (html5-qrcode) y el PDF del ticket arman estilos en linea.
+const CSP = [
+  "default-src 'self'",
+  "script-src 'self'",
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+  "font-src 'self' https://fonts.gstatic.com",
+  "img-src 'self' data: blob: https://res.cloudinary.com",
+  "media-src 'self' blob:",
+  "connect-src 'self'",
+  "worker-src 'self' blob:",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+  "frame-ancestors 'none'",
+].join('; ');
+
+app.use((req, res, next) => {
+  res.set({
+    'Content-Security-Policy': CSP,
+    'Strict-Transport-Security': 'max-age=31536000',
+    'X-Content-Type-Options': 'nosniff',
+    'X-Frame-Options': 'DENY',
+    'Referrer-Policy': 'strict-origin-when-cross-origin',
+    'Permissions-Policy': 'camera=(self), microphone=(), geolocation=()',
+  });
+  next();
+});
+
 app.use(express.json());
 
 app.use('/api/auth', authRoutes);

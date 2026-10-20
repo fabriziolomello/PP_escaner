@@ -1,0 +1,144 @@
+.legal {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--color-bg);
+}
+
+.legal-wrap {
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+  padding-inline: 20px;
+}
+
+.legal-nav {
+  border-bottom: 1px solid var(--color-border);
+}
+
+.legal-nav__inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-block: 16px;
+}
+
+.legal-nav__logo {
+  color: var(--color-text);
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  text-decoration: none;
+}
+
+.legal-nav__volver {
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  text-decoration: none;
+}
+
+.legal-content {
+  flex: 1;
+  padding-block: 32px 48px;
+  font-size: 15px;
+  line-height: 1.65;
+  color: var(--color-text-secondary);
+  overflow-wrap: anywhere;
+}
+
+.legal-content h1 {
+  margin: 0;
+  color: var(--color-text);
+  font-size: clamp(26px, 6vw, 34px);
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  line-height: 1.15;
+}
+
+.legal-content__fecha {
+  margin: 8px 0 28px;
+  font-size: 13px;
+}
+
+.legal-content h2 {
+  margin: 32px 0 8px;
+  color: var(--color-text);
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.legal-content p {
+  margin: 0 0 14px;
+}
+
+.legal-content ul {
+  margin: 0 0 14px;
+  padding-left: 20px;
+}
+
+.legal-content li {
+  margin-bottom: 8px;
+}
+
+.legal-content strong {
+  color: var(--color-text);
+}
+
+.legal-content a {
+  color: var(--color-accent);
+}
+
+.legal-content__aviso {
+  padding: 14px 16px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background-color: var(--color-surface);
+  font-size: 13px;
+}
+
+.legal-content__nota {
+  margin-top: 24px;
+  font-size: 13px;
+}
+
+.legal-content .legal-boton {
+  display: inline-block;
+  margin: 8px 0 8px;
+  padding: 13px 22px;
+  border-radius: var(--radius-sm);
+  background-color: #ffffff;
+  color: var(--color-button-text-on-white);
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.legal-footer {
+  border-top: 1px solid var(--color-border);
+  padding-block: 24px;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+.legal-footer p {
+  margin: 12px 0 0;
+}
+
+.legal-footer a {
+  color: var(--color-text-secondary);
+}
+
+/* Fila de links legales (pie de la landing, de estas páginas y Mi cuenta). */
+.legal-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  font-size: 13px;
+}
+
+.legal-links a {
+  color: var(--color-text-secondary);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}

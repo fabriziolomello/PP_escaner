@@ -11,6 +11,7 @@ export default function Registro() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
+  const [aceptaTerminos, setAceptaTerminos] = useState(false)
   const [error, setError] = useState('')
   const [cargando, setCargando] = useState(false)
   // Registro hecho: no se inicia sesión hasta confirmar el email.
@@ -34,6 +35,7 @@ export default function Registro() {
         nombreAdmin,
         email,
         password,
+        aceptaTerminos,
       })
       setRegistrado(resultado)
     } catch (err) {
@@ -171,6 +173,26 @@ export default function Registro() {
               onChange={(event) => setConfirmPassword(event.target.value)}
               required
             />
+          </label>
+
+          {/* Los links abren en otra pestaña para no perder lo que ya se completó. */}
+          <label className="registro-form__terminos">
+            <input
+              type="checkbox"
+              checked={aceptaTerminos}
+              onChange={(event) => setAceptaTerminos(event.target.checked)}
+              required
+            />
+            <span>
+              Leí y acepto los{' '}
+              <Link to="/terminos" target="_blank">
+                Términos y condiciones
+              </Link>{' '}
+              y la{' '}
+              <Link to="/privacidad" target="_blank">
+                Política de privacidad
+              </Link>
+            </span>
           </label>
 
           <button className="registro-form__submit" type="submit" disabled={cargando}>
