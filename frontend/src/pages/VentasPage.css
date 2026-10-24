@@ -233,6 +233,17 @@
   font-size: 13px;
 }
 
+.venta-item__ajuste {
+  margin: -2px 0 6px;
+  font-size: 11px;
+  color: var(--color-accent);
+}
+
+.venta-item__linea--descuento {
+  margin-top: 8px;
+  color: var(--color-text-secondary);
+}
+
 .venta-item__vendedor {
   margin: 8px 0 0;
   font-size: 12px;

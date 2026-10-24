@@ -55,13 +55,27 @@ function dibujar(doc, { comercio, venta }) {
   texto(`Ticket N° ${venta.id}`, { alineacion: 'center' })
   separador()
 
+  // El precio cambiado a mano no se marca (es el precio que se cobró), pero
+  // los descuentos sí, con su monto en negativo.
   for (const item of venta.items) {
+    const bruto = Number(item.precio_unitario) * item.cantidad
+    const descuentoItem = bruto - Number(item.subtotal)
     texto(item.nombre, { negrita: true })
-    fila(`${item.cantidad} × ${formatearPrecio(item.precio_unitario)}`, formatearPrecio(item.subtotal))
+    fila(`${item.cantidad} × ${formatearPrecio(item.precio_unitario)}`, formatearPrecio(bruto))
+    if (descuentoItem > 0) {
+      fila(`Descuento ${Number(item.descuento_porcentaje)}%`, formatearPrecio(-descuentoItem))
+    }
     y += 1.5
   }
   separador()
 
+  const descuentoVenta = Number(venta.descuento || 0)
+  if (descuentoVenta > 0) {
+    fila('Subtotal', formatearPrecio(Number(venta.total) + descuentoVenta))
+    const porcentaje = venta.descuento_porcentaje ? ` ${Number(venta.descuento_porcentaje)}%` : ''
+    fila(`Descuento${porcentaje}`, formatearPrecio(-descuentoVenta))
+    y += 1
+  }
   fila('TOTAL', formatearPrecio(venta.total), { tamano: 12, negrita: true })
   y += 1
   fila('Medio de pago', etiquetaMetodoPago(venta.metodo_pago))

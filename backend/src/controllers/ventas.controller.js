@@ -9,21 +9,58 @@ function aCentavos(valor) {
   return Math.round(Number(valor) * 100);
 }
 
-// Une items repetidos del mismo producto (ej: se agrego dos veces al carrito)
-// y valida que cada cantidad sea un entero positivo.
+// Tope de precio y descuento por monto: entra en NUMERIC(12, 2).
+const MAXIMO_PRECIO = 9999999999;
+
+// Valida los items de la venta. Cada producto va una sola vez, con cantidad
+// entera positiva; el precio es opcional (si no viene se usa el del catalogo,
+// si viene es porque el vendedor lo cambio en el carrito) y el descuento es
+// un porcentaje de 0 a 100. Devuelve un Map producto_id -> item, o null.
 function normalizarItems(items) {
   if (!Array.isArray(items) || items.length === 0) return null;
 
-  const cantidades = new Map();
+  const porProducto = new Map();
   for (const item of items) {
     const productoId = Number(item?.producto_id);
     const cantidad = Number(item?.cantidad);
     if (!Number.isInteger(productoId) || !Number.isInteger(cantidad) || cantidad <= 0) {
       return null;
     }
-    cantidades.set(productoId, (cantidades.get(productoId) || 0) + cantidad);
+    if (porProducto.has(productoId)) return null;
+
+    let precioCentavos = null;
+    if (item.precio_unitario !== undefined && item.precio_unitario !== null) {
+      const precio = Number(item.precio_unitario);
+      if (!Number.isFinite(precio) || precio <= 0 || precio > MAXIMO_PRECIO) return null;
+      precioCentavos = aCentavos(precio);
+    }
+
+    const descuento = Number(item.descuento_porcentaje ?? 0);
+    if (!Number.isFinite(descuento) || descuento < 0 || descuento > 100) return null;
+
+    porProducto.set(productoId, {
+      cantidad,
+      precioCentavos,
+      descuentoPorcentaje: Math.round(descuento * 100) / 100,
+    });
   }
-  return cantidades;
+  return porProducto;
+}
+
+// Descuento a toda la venta: { tipo: 'monto' | 'porcentaje', valor } o nada.
+// Devuelve { porcentaje } o { montoCentavos }, {} si no hay, o null si es invalido.
+function normalizarDescuento(descuento) {
+  if (descuento === undefined || descuento === null) return {};
+  const valor = Number(descuento.valor);
+  if (!Number.isFinite(valor) || valor < 0) return null;
+  if (valor === 0) return {};
+  if (descuento.tipo === 'porcentaje') {
+    return valor > 100 ? null : { porcentaje: Math.round(valor * 100) / 100 };
+  }
+  if (descuento.tipo === 'monto') {
+    return valor > MAXIMO_PRECIO ? null : { montoCentavos: aCentavos(valor) };
+  }
+  return null;
 }
 
 // No se puede vender mas de lo que hay en stock: el stock nunca queda
@@ -31,19 +68,26 @@ function normalizarItems(items) {
 // Venta, items y descuento de stock van en una sola transaccion (el FOR
 // UPDATE evita que dos ventas simultaneas vendan la misma ultima unidad).
 // Sin caja abierta no se vende: cada venta queda asociada a la caja del turno.
+// Los montos se calculan aca (en centavos) con el mismo redondeo que muestra
+// el carrito (CarritoContext.jsx): primero el descuento de cada item y
+// despues el de la venta sobre la suma de los items.
 async function crear(req, res) {
   const { metodo_pago } = req.body;
   const { comercio_id, user_id } = req.user;
 
-  const cantidades = normalizarItems(req.body.items);
-  if (!cantidades) {
-    return res.status(400).json({ error: 'La venta debe tener al menos un producto con cantidad valida' });
+  const pedidos = normalizarItems(req.body.items);
+  if (!pedidos) {
+    return res.status(400).json({ error: 'La venta tiene algun producto con cantidad, precio o descuento invalido' });
+  }
+  const descuentoVenta = normalizarDescuento(req.body.descuento);
+  if (!descuentoVenta) {
+    return res.status(400).json({ error: 'Descuento invalido' });
   }
   if (!METODOS_PAGO.includes(metodo_pago)) {
     return res.status(400).json({ error: 'Medio de pago invalido' });
   }
 
-  const productoIds = [...cantidades.keys()];
+  const productoIds = [...pedidos.keys()];
   const connection = await pool.getConnection();
   try {
     await connection.beginTransaction();
@@ -81,7 +125,7 @@ async function crear(req, res) {
         .status(409)
         .json({ error: `${desactivado.nombre} está desactivado: sacalo del carrito para vender` });
     }
-    const sinStock = productos.filter((producto) => producto.stock < cantidades.get(producto.id));
+    const sinStock = productos.filter((producto) => producto.stock < pedidos.get(producto.id).cantidad);
     if (sinStock.length > 0) {
       await connection.rollback();
       const detalle = sinStock.map((producto) => `${producto.nombre} (hay ${Math.max(0, producto.stock)})`);
@@ -93,30 +137,59 @@ async function crear(req, res) {
     }
 
     const items = productos.map((producto) => {
-      const cantidad = cantidades.get(producto.id);
-      const precioCentavos = aCentavos(producto.precio);
+      const { cantidad, precioCentavos, descuentoPorcentaje } = pedidos.get(producto.id);
+      const precioListaCentavos = aCentavos(producto.precio);
+      const precioUnitarioCentavos = precioCentavos ?? precioListaCentavos;
+      const brutoCentavos = precioUnitarioCentavos * cantidad;
+      const subtotalCentavos = brutoCentavos - Math.round((brutoCentavos * descuentoPorcentaje) / 100);
       return {
         producto_id: producto.id,
         nombre: producto.nombre,
         cantidad,
-        precio_unitario: precioCentavos / 100,
-        subtotal: (precioCentavos * cantidad) / 100,
+        precio_unitario: precioUnitarioCentavos / 100,
+        precio_lista: precioListaCentavos / 100,
+        descuento_porcentaje: descuentoPorcentaje,
+        subtotal: subtotalCentavos / 100,
       };
     });
-    const totalCentavos = items.reduce((suma, item) => suma + aCentavos(item.subtotal), 0);
-    const total = totalCentavos / 100;
+    const subtotalCentavos = items.reduce((suma, item) => suma + aCentavos(item.subtotal), 0);
+
+    let descuentoCentavos = 0;
+    if (descuentoVenta.porcentaje !== undefined) {
+      descuentoCentavos = Math.round((subtotalCentavos * descuentoVenta.porcentaje) / 100);
+    } else if (descuentoVenta.montoCentavos !== undefined) {
+      if (descuentoVenta.montoCentavos > subtotalCentavos) {
+        await connection.rollback();
+        return res.status(400).json({ error: 'El descuento no puede superar el total de la venta' });
+      }
+      descuentoCentavos = descuentoVenta.montoCentavos;
+    }
+    const total = (subtotalCentavos - descuentoCentavos) / 100;
+    const descuento = descuentoCentavos / 100;
+    const descuentoPorcentaje = descuentoVenta.porcentaje ?? null;
 
     const [ventaResult] = await connection.query(
-      `INSERT INTO ventas (comercio_id, usuario_id, caja_id, total, metodo_pago)
-       VALUES (?, ?, ?, ?, ?)`,
-      [comercio_id, user_id, cajaId, total, metodo_pago]
+      `INSERT INTO ventas (comercio_id, usuario_id, caja_id, total, descuento, descuento_porcentaje, metodo_pago)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [comercio_id, user_id, cajaId, total, descuento, descuentoPorcentaje, metodo_pago]
     );
     const ventaId = ventaResult.insertId;
 
     await connection.query(
-      `INSERT INTO venta_items (venta_id, producto_id, cantidad, precio_unitario, subtotal)
+      `INSERT INTO venta_items
+         (venta_id, producto_id, cantidad, precio_unitario, precio_lista, descuento_porcentaje, subtotal)
        VALUES ?`,
-      [items.map((item) => [ventaId, item.producto_id, item.cantidad, item.precio_unitario, item.subtotal])]
+      [
+        items.map((item) => [
+          ventaId,
+          item.producto_id,
+          item.cantidad,
+          item.precio_unitario,
+          item.precio_lista,
+          item.descuento_porcentaje,
+          item.subtotal,
+        ]),
+      ]
     );
 
     for (const item of items) {
@@ -132,6 +205,8 @@ async function crear(req, res) {
       id: ventaId,
       creado_en: new Date(),
       total,
+      descuento,
+      descuento_porcentaje: descuentoPorcentaje,
       metodo_pago,
       anulada: false,
       items,
@@ -189,7 +264,8 @@ async function listar(req, res) {
 
   try {
     const [ventas] = await pool.query(
-      `SELECT ventas.id, ventas.total, ventas.metodo_pago, ventas.anulada, ventas.creado_en,
+      `SELECT ventas.id, ventas.total, ventas.descuento, ventas.descuento_porcentaje,
+              ventas.metodo_pago, ventas.anulada, ventas.creado_en,
               usuarios.nombre AS usuario_nombre, cajas.estado AS caja_estado
        FROM ventas
        JOIN usuarios ON usuarios.id = ventas.usuario_id
@@ -228,7 +304,8 @@ async function listar(req, res) {
 
     const [items] = await pool.query(
       `SELECT venta_items.venta_id, venta_items.producto_id, venta_items.cantidad,
-              venta_items.precio_unitario, venta_items.subtotal, productos.nombre
+              venta_items.precio_unitario, venta_items.precio_lista, venta_items.descuento_porcentaje,
+              venta_items.subtotal, productos.nombre
        FROM venta_items
        JOIN productos ON productos.id = venta_items.producto_id
        WHERE venta_items.venta_id IN (?)

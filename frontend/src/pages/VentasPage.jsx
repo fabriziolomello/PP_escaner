@@ -25,6 +25,21 @@ function rangoFiltro(desde, hasta) {
   return { desde: inicio, hasta: fin }
 }
 
+// Aclaración debajo de un item si el vendedor le cambió el precio o le
+// puso descuento. Las ventas de antes de esto no tienen precio_lista.
+function detalleItem(item) {
+  const partes = []
+  if (item.precio_lista !== null && Number(item.precio_unitario) !== Number(item.precio_lista)) {
+    partes.push(
+      `Precio cambiado: ${formatearPrecio(item.precio_unitario)} (lista ${formatearPrecio(item.precio_lista)})`
+    )
+  }
+  if (Number(item.descuento_porcentaje) > 0) {
+    partes.push(`Descuento ${Number(item.descuento_porcentaje)}%`)
+  }
+  return partes.join(' · ')
+}
+
 // Historial de ventas: hace también de "dashboard" con el resumen del
 // período filtrado (por defecto, hoy). La lista trae hasta 100 ventas con
 // sus items; el resumen lo calcula el backend sobre todo el filtro.
@@ -214,13 +229,25 @@ export default function VentasPage() {
                 {abierta && (
                   <div className="venta-item__items">
                     {venta.items.map((item) => (
-                      <p className="venta-item__linea" key={item.producto_id}>
-                        <span>
-                          {item.cantidad} × {item.nombre}
-                        </span>
-                        <span>{formatearPrecio(item.subtotal)}</span>
-                      </p>
+                      <div key={item.producto_id}>
+                        <p className="venta-item__linea">
+                          <span>
+                            {item.cantidad} × {item.nombre}
+                          </span>
+                          <span>{formatearPrecio(item.subtotal)}</span>
+                        </p>
+                        {detalleItem(item) && <p className="venta-item__ajuste">{detalleItem(item)}</p>}
+                      </div>
                     ))}
+                    {Number(venta.descuento) > 0 && (
+                      <p className="venta-item__linea venta-item__linea--descuento">
+                        <span>
+                          Descuento a la venta
+                          {venta.descuento_porcentaje && ` ${Number(venta.descuento_porcentaje)}%`}
+                        </span>
+                        <span>−{formatearPrecio(venta.descuento)}</span>
+                      </p>
+                    )}
                     <p className="venta-item__vendedor">Vendió: {venta.usuario_nombre}</p>
 
                     {!venta.anulada && <TicketAcciones venta={venta} />}

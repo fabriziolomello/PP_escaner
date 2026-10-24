@@ -75,7 +75,11 @@ CREATE TABLE IF NOT EXISTS ventas (
   comercio_id INT NOT NULL,
   usuario_id INT NOT NULL,
   caja_id INT NULL,
+  -- total ya tiene aplicado el descuento de la venta; descuento es el monto
+  -- descontado y descuento_porcentaje el % elegido (NULL si fue por monto).
   total NUMERIC(12, 2) NOT NULL,
+  descuento NUMERIC(12, 2) NOT NULL DEFAULT 0,
+  descuento_porcentaje NUMERIC(5, 2) NULL,
   metodo_pago VARCHAR(20) NOT NULL CHECK (metodo_pago IN ('efectivo', 'mercadopago', 'tarjeta')),
   anulada BOOLEAN NOT NULL DEFAULT false,
   creado_en TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -85,14 +89,18 @@ CREATE TABLE IF NOT EXISTS ventas (
   INDEX idx_ventas_comercio_fecha (comercio_id, creado_en)
 );
 
--- precio_unitario se copia al momento de la venta: si despues cambia el
--- precio del producto, el historial no se altera.
+-- precio_unitario es el precio cobrado, copiado al momento de la venta: si
+-- despues cambia el precio del producto, el historial no se altera. El
+-- vendedor lo puede cambiar en el carrito; precio_lista guarda el del
+-- catalogo para ver si se modifico. subtotal ya tiene el descuento aplicado.
 CREATE TABLE IF NOT EXISTS venta_items (
   id INT AUTO_INCREMENT PRIMARY KEY,
   venta_id INT NOT NULL,
   producto_id INT NOT NULL,
   cantidad INT NOT NULL CHECK (cantidad > 0),
   precio_unitario NUMERIC(12, 2) NOT NULL,
+  precio_lista NUMERIC(12, 2) NULL,
+  descuento_porcentaje NUMERIC(5, 2) NOT NULL DEFAULT 0,
   subtotal NUMERIC(12, 2) NOT NULL,
   FOREIGN KEY (venta_id) REFERENCES ventas(id),
   FOREIGN KEY (producto_id) REFERENCES productos(id)

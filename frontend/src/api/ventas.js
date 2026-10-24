@@ -1,11 +1,13 @@
 import apiFetch from './client'
 
-// items: [{ producto_id, cantidad }]. El precio lo toma el backend de la
-// base, no del cliente (ver ventas.controller.js).
-export function crear({ items, metodoPago }) {
+// items: [{ producto_id, cantidad, precio_unitario?, descuento_porcentaje? }].
+// Sin precio_unitario el backend usa el del catálogo; solo se manda si el
+// vendedor lo cambió. descuento: { tipo: 'monto' | 'porcentaje', valor } o null.
+// Los montos los vuelve a calcular el backend (ver ventas.controller.js).
+export function crear({ items, descuento, metodoPago }) {
   return apiFetch('/ventas', {
     method: 'POST',
-    body: JSON.stringify({ items, metodo_pago: metodoPago }),
+    body: JSON.stringify({ items, descuento, metodo_pago: metodoPago }),
   })
 }
 

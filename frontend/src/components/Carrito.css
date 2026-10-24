@@ -109,11 +109,14 @@
 }
 
 .carrito-item {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.carrito-item__fila {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 10px 0;
-  border-bottom: 1px solid var(--color-border);
 }
 
 .carrito-item__imagen {
@@ -152,6 +155,101 @@
 }
 
 .carrito-item__precio {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+.carrito-item__modificado {
+  font-size: 11px;
+  color: var(--color-accent);
+}
+
+.carrito-link {
+  align-self: flex-start;
+  padding: 2px 0;
+  border: none;
+  background: none;
+  color: var(--color-accent);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.carrito-item__editor {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.carrito-item__restaurar {
+  grid-column: 1 / -1;
+}
+
+.carrito-campo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.carrito-campo input,
+.carrito-descuento__control input {
+  width: 100%;
+  min-width: 0;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  background-color: var(--color-surface-alt);
+  color: var(--color-text);
+  font-size: 14px;
+}
+
+.carrito-descuento {
+  padding-top: 14px;
+}
+
+.carrito-descuento__control {
+  display: flex;
+  gap: 8px;
+}
+
+.carrito-descuento__tipos {
+  display: flex;
+  flex-shrink: 0;
+  gap: 4px;
+}
+
+.carrito-descuento__tipo {
+  width: 40px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background-color: var(--color-surface-alt);
+  color: var(--color-text);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.carrito-descuento__tipo--activo {
+  border-color: var(--color-accent);
+  background-color: var(--color-accent-bg);
+  color: var(--color-accent);
+}
+
+.carrito-descuento .carrito-item__aviso {
+  margin: 6px 0 0;
+}
+
+.carrito-subtotales {
+  padding-top: 14px;
+}
+
+.carrito-subtotales p {
+  display: flex;
+  justify-content: space-between;
+  margin: 0 0 6px;
   font-size: 13px;
   color: var(--color-text-secondary);
 }
